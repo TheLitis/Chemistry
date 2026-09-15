@@ -1,1 +1,1 @@
-ChemistryPC integration health trigger: validate version then configure embedded Python
+ChemistryPC integration health trigger: bootstrap pip after nonfatal pip absence
