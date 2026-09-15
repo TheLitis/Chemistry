@@ -18,16 +18,16 @@ jobs:
   health:
     runs-on: [self-hosted, Windows, X64, ChemistryPC]
     timeout-minutes: 20
+    env:
+      PSExecutionPolicyPreference: Bypass
     defaults:
       run:
         shell: powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ". '{0}'"
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure runner-service PowerShell policy
-        run: |
-          Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force
-          Get-ExecutionPolicy -List
+      - name: Show PowerShell policy
+        run: Get-ExecutionPolicy -List
 
       - name: Provision job Python
         uses: actions/setup-python@v5
