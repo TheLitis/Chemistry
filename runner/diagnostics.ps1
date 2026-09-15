@@ -81,7 +81,14 @@ print(json.dumps(result))
         }
     }
 
-    $probeResult = Invoke-NativeCapture -Executable $pythonPath -Arguments ($pythonArgs + @('-c', $probe))
+    $probePath = Join-Path $OutputDirectory ("python-probe-{0}.py" -f [guid]::NewGuid())
+    try {
+        Set-Content -LiteralPath $probePath -Value $probe -Encoding UTF8
+        $probeResult = Invoke-NativeCapture -Executable $pythonPath -Arguments ($pythonArgs + @($probePath))
+    } finally {
+        Remove-Item -LiteralPath $probePath -Force -ErrorAction SilentlyContinue
+    }
+
     if ($probeResult.exit_code -ne 0) {
         return [pscustomobject]@{
             available = $false
@@ -211,3 +218,5 @@ if (-not $report.python.available -and $report.python.error) {
     Write-Host "Python diagnostic error: $($report.python.error)" -ForegroundColor Yellow
 }
 Write-Host "Report: $jsonPath"
+
+$global:LASTEXITCODE = 0
