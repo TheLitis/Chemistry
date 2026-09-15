@@ -22,52 +22,74 @@ function Test-Python([string]$Path) {
 if (Test-Python $PythonExe) {
     Write-Host "Chemistry Python already available: $PythonExe"
     & $PythonExe --version
-    Write-Output $PythonExe
-    exit 0
+    if (& $PythonExe -m pip --version 2>$null) {
+        Write-Output $PythonExe
+        exit 0
+    }
 }
 
 New-Item -ItemType Directory -Force -Path $StateRoot, $CacheRoot | Out-Null
-$installer = Join-Path $CacheRoot "python-$Version-amd64.exe"
-$url = "https://www.python.org/ftp/python/$Version/python-$Version-amd64.exe"
+$archive = Join-Path $CacheRoot "python-$Version-embed-amd64.zip"
+$archiveUrl = "https://www.python.org/ftp/python/$Version/python-$Version-embed-amd64.zip"
+$getPip = Join-Path $CacheRoot 'get-pip.py'
 
-if (-not (Test-Path -LiteralPath $installer)) {
-    Write-Host "Downloading Python $Version from python.org..."
-    Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $installer
+if (-not (Test-Path -LiteralPath $archive)) {
+    Write-Host "Downloading Python $Version embeddable package from python.org..."
+    Invoke-WebRequest -UseBasicParsing -Uri $archiveUrl -OutFile $archive
 }
-
-$signature = Get-AuthenticodeSignature -LiteralPath $installer
-if ($signature.Status -ne 'Valid') {
-    throw "Python installer signature is not valid: $($signature.Status)"
-}
-if (-not $signature.SignerCertificate -or $signature.SignerCertificate.Subject -notmatch 'Python Software Foundation') {
-    throw "Unexpected Python installer signer: $($signature.SignerCertificate.Subject)"
+if (-not (Test-Path -LiteralPath $getPip)) {
+    Write-Host 'Downloading pip bootstrap from bootstrap.pypa.io...'
+    Invoke-WebRequest -UseBasicParsing -Uri 'https://bootstrap.pypa.io/get-pip.py' -OutFile $getPip
 }
 
-Write-Host "Installing isolated Chemistry Python into $PythonRoot ..."
-$args = @(
-    '/quiet',
-    'InstallAllUsers=0',
-    'Include_launcher=0',
-    'Include_test=0',
-    'Include_doc=0',
-    'Include_tcltk=0',
-    'Include_pip=1',
-    'PrependPath=0',
-    'Shortcuts=0',
-    "TargetDir=$PythonRoot"
-)
-$process = Start-Process -FilePath $installer -ArgumentList $args -Wait -PassThru -NoNewWindow
-if ($process.ExitCode -ne 0) {
-    throw "Python installer exited with code $($process.ExitCode)."
+Write-Host "Extracting isolated Chemistry Python into $PythonRoot ..."
+if (Test-Path -LiteralPath $PythonRoot) {
+    Remove-Item -LiteralPath $PythonRoot -Recurse -Force
 }
+New-Item -ItemType Directory -Force -Path $PythonRoot | Out-Null
+Expand-Archive -LiteralPath $archive -DestinationPath $PythonRoot -Force
 
 if (-not (Test-Python $PythonExe)) {
-    throw "Python installation completed but $PythonExe is not usable."
+    throw "Embedded Python extracted but $PythonExe is not usable."
+}
+
+$pth = Get-ChildItem -LiteralPath $PythonRoot -Filter 'python*._pth' -File | Select-Object -First 1
+if (-not $pth) {
+    throw 'Embedded Python _pth file was not found.'
+}
+
+$lines = Get-Content -LiteralPath $pth.FullName
+$updated = New-Object System.Collections.Generic.List[string]
+$hasLib = $false
+$hasSitePackages = $false
+$hasImportSite = $false
+foreach ($line in $lines) {
+    $trimmed = $line.Trim()
+    if ($trimmed -ieq 'Lib') { $hasLib = $true }
+    if ($trimmed -ieq 'Lib\site-packages') { $hasSitePackages = $true }
+    if ($trimmed -match '^#?\s*import\s+site\s*$') {
+        if (-not $hasImportSite) {
+            $updated.Add('import site')
+            $hasImportSite = $true
+        }
+        continue
+    }
+    $updated.Add($line)
+}
+if (-not $hasLib) { $updated.Add('Lib') }
+if (-not $hasSitePackages) { $updated.Add('Lib\site-packages') }
+if (-not $hasImportSite) { $updated.Add('import site') }
+Set-Content -LiteralPath $pth.FullName -Value $updated -Encoding ASCII
+
+Write-Host 'Bootstrapping pip inside isolated Chemistry Python...'
+& $PythonExe $getPip --disable-pip-version-check --no-warn-script-location
+if ($LASTEXITCODE -ne 0) {
+    throw "get-pip.py failed with exit code $LASTEXITCODE."
 }
 
 & $PythonExe -m pip --version
 if ($LASTEXITCODE -ne 0) {
-    throw 'Python is installed but pip is unavailable.'
+    throw 'Python is available but pip bootstrap failed.'
 }
 
 Write-Host "Chemistry Python ready: $PythonExe" -ForegroundColor Green
