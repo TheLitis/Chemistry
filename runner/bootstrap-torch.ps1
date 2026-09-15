@@ -13,6 +13,18 @@ if (-not (Test-Path -LiteralPath $PythonExe)) {
     throw "Chemistry Python is missing: $PythonExe"
 }
 
+function Test-Package {
+    param([string]$Interpreter, [string]$Name)
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & $Interpreter -m pip show $Name *> $null
+        return ($LASTEXITCODE -eq 0)
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+}
+
 function Test-TorchCuda {
     param([string]$Interpreter)
 
@@ -41,20 +53,32 @@ print(json.dumps(result))
         $output = @(& $Interpreter $probePath 2>&1)
         $code = $LASTEXITCODE
         $ErrorActionPreference = $previousPreference
-        $text = (($output | ForEach-Object { $_.ToString() }) -join "`n").Trim()
+        $lines = @($output | ForEach-Object { $_.ToString().Trim() } | Where-Object { $_ })
+        $text = ($lines -join "`n").Trim()
         if ($code -ne 0) {
             return [pscustomobject]@{ ok = $false; error = $text }
         }
-        try {
-            $obj = $text | ConvertFrom-Json
-        } catch {
-            return [pscustomobject]@{ ok = $false; error = "Invalid torch probe JSON: $text" }
+        $jsonLine = $lines | Where-Object { $_ -match '^\{.*\}$' } | Select-Object -Last 1
+        if (-not $jsonLine) {
+            return [pscustomobject]@{ ok = $false; error = "Torch probe produced no JSON object: $text" }
         }
-        return [pscustomobject]@{ ok = [bool]($obj.torch_available -and $obj.cuda_available); probe = $obj }
+        try {
+            $obj = $jsonLine | ConvertFrom-Json
+        } catch {
+            return [pscustomobject]@{ ok = $false; error = "Invalid torch probe JSON: $jsonLine`nFull output:`n$text" }
+        }
+        return [pscustomobject]@{ ok = [bool]($obj.torch_available -and $obj.cuda_available); probe = $obj; output = $text }
     } finally {
         $ErrorActionPreference = 'Stop'
         Remove-Item -LiteralPath $probePath -Force -ErrorAction SilentlyContinue
     }
+}
+
+$env:PIP_CACHE_DIR = $CacheRoot
+if (-not (Test-Package -Interpreter $PythonExe -Name 'numpy')) {
+    Write-Host 'Installing NumPy into persistent Chemistry Python...'
+    & $PythonExe -m pip install --disable-pip-version-check --no-warn-script-location numpy
+    if ($LASTEXITCODE -ne 0) { throw "NumPy installation failed with exit code $LASTEXITCODE." }
 }
 
 $before = Test-TorchCuda -Interpreter $PythonExe
@@ -65,8 +89,7 @@ if ($before.ok) {
 }
 
 Write-Host "Installing/upgrading CUDA-enabled PyTorch from $IndexUrl ..."
-$env:PIP_CACHE_DIR = $CacheRoot
-& $PythonExe -m pip install --disable-pip-version-check --upgrade --index-url $IndexUrl torch
+& $PythonExe -m pip install --disable-pip-version-check --no-warn-script-location --upgrade --index-url $IndexUrl torch
 if ($LASTEXITCODE -ne 0) {
     throw "PyTorch installation failed with exit code $LASTEXITCODE."
 }
