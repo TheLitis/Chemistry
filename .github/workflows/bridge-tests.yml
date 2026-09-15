@@ -1,0 +1,16 @@
+name: Bridge tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  powershell-parse:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse bridge PowerShell scripts
+        shell: powershell
+        run: .\tests\Test-BridgeScripts.ps1
