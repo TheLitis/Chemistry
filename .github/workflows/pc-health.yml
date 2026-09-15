@@ -18,23 +18,27 @@ jobs:
   health:
     runs-on: [self-hosted, Windows, X64, ChemistryPC]
     timeout-minutes: 20
+    defaults:
+      run:
+        shell: powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ". '{0}'"
     steps:
       - uses: actions/checkout@v4
 
-      - name: Provision job Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
+      - name: Resolve existing Python
+        run: |
+          $python = (.\runner\resolve-python.ps1 | Select-Object -Last 1).Trim()
+          if (-not $python) { throw 'Python resolver returned an empty path.' }
+          "CHEMISTRY_PYTHON=$python" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          (Split-Path -Parent $python) | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & $python --version
 
       - name: Hardware diagnostics
-        shell: powershell
         run: |
           $out = Join-Path $env:RUNNER_TEMP 'chemistry-health'
           New-Item -ItemType Directory -Force -Path $out | Out-Null
           .\runner\diagnostics.ps1 -OutputDirectory $out
 
       - name: Compute smoke test
-        shell: powershell
         run: |
           $out = Join-Path $env:RUNNER_TEMP 'chemistry-health'
           $cfgPath = Join-Path $env:ProgramData 'ChemistryRunner\machine.json'
@@ -43,7 +47,7 @@ jobs:
             $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
             if ($cfg.maxRamSmokeGiB) { $maxRam = [double]$cfg.maxRamSmokeGiB }
           }
-          python .\runner\compute_smoke.py --output (Join-Path $out 'compute-smoke.json') --max-ram-gib $maxRam
+          & $env:CHEMISTRY_PYTHON .\runner\compute_smoke.py --output (Join-Path $out 'compute-smoke.json') --max-ram-gib $maxRam
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload health reports
