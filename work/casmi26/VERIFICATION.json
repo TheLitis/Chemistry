@@ -1,0 +1,20 @@
+{
+  "session_date": "2026-09-15",
+  "python": "3.13.5",
+  "numpy": "2.3.5",
+  "rdkit": "2025.09.4",
+  "unit_tests": {
+    "passed": 24,
+    "skipped": 1,
+    "failed": 0,
+    "skip_reason": "PyArrow is not installed in the development environment"
+  },
+  "compileall": "passed",
+  "git_diff_check": "passed",
+  "official_metric_verified": false,
+  "official_score": null,
+  "real_casmi_data_used": false,
+  "pc_execution_verified": false,
+  "github_ci_verified": false,
+  "scope": "Synthetic software fixtures only; not evidence of molecular identification accuracy."
+}
