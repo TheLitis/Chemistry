@@ -8,7 +8,8 @@ $files = @(
     (Join-Path $repoRoot 'runner\install.ps1'),
     (Join-Path $repoRoot 'runner\health.ps1'),
     (Join-Path $repoRoot 'runner\uninstall.ps1'),
-    (Join-Path $repoRoot 'runner\diagnostics.ps1')
+    (Join-Path $repoRoot 'runner\diagnostics.ps1'),
+    (Join-Path $repoRoot 'runner\resolve-python.ps1')
 )
 
 $regressionSource = @'
