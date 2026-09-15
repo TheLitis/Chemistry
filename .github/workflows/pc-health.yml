@@ -17,7 +17,7 @@ concurrency:
 jobs:
   health:
     runs-on: [self-hosted, Windows, X64, ChemistryPC]
-    timeout-minutes: 20
+    timeout-minutes: 45
     defaults:
       run:
         shell: powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ". '{0}'"
@@ -40,13 +40,17 @@ jobs:
           & $python --version
           & $python -m pip --version
 
+      - name: Bootstrap CUDA PyTorch
+        run: |
+          .\runner\bootstrap-torch.ps1 -PythonExe $env:CHEMISTRY_PYTHON
+
       - name: Hardware diagnostics
         run: |
           $out = Join-Path $env:RUNNER_TEMP 'chemistry-health'
           New-Item -ItemType Directory -Force -Path $out | Out-Null
           .\runner\diagnostics.ps1 -OutputDirectory $out
 
-      - name: Compute smoke test
+      - name: Compute smoke test with required CUDA
         run: |
           $out = Join-Path $env:RUNNER_TEMP 'chemistry-health'
           $cfgPath = Join-Path $env:ProgramData 'ChemistryRunner\machine.json'
@@ -55,7 +59,7 @@ jobs:
             $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
             if ($cfg.maxRamSmokeGiB) { $maxRam = [double]$cfg.maxRamSmokeGiB }
           }
-          & $env:CHEMISTRY_PYTHON .\runner\compute_smoke.py --output (Join-Path $out 'compute-smoke.json') --max-ram-gib $maxRam
+          & $env:CHEMISTRY_PYTHON .\runner\compute_smoke.py --output (Join-Path $out 'compute-smoke.json') --max-ram-gib $maxRam --require-cuda
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload health reports
