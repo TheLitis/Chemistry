@@ -2,6 +2,10 @@ name: ChemistryPC health
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'runner/health-trigger.txt'
 
 permissions:
   contents: read
