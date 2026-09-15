@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "system-summary-20260916-01",
+  "id": "casmi-audit-20260916-01",
   "task": "script",
-  "script": "tasks/system-summary.ps1",
+  "script": "tasks/casmi_audit.py",
   "arguments": [],
   "requireCuda": false
 }
