@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "id": "casmi-prepare-20260916-02",
+  "id": "casmi-prepare-20260916-03",
   "task": "script",
   "script": "tasks/casmi_prepare.py",
   "arguments": ["--download"],
