@@ -1,1 +1,1 @@
-ChemistryPC integration health trigger: retry with persistent non-admin Python bootstrap
+ChemistryPC integration health trigger: retry with embeddable CPython runtime
