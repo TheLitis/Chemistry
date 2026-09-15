@@ -11,7 +11,8 @@ $files = @(
     (Join-Path $repoRoot 'runner\diagnostics.ps1'),
     (Join-Path $repoRoot 'runner\resolve-python.ps1'),
     (Join-Path $repoRoot 'runner\bootstrap-python.ps1'),
-    (Join-Path $repoRoot 'runner\bootstrap-torch.ps1')
+    (Join-Path $repoRoot 'runner\bootstrap-torch.ps1'),
+    (Join-Path $repoRoot 'runner\run-request.ps1')
 )
 
 $regressionSource = @'
