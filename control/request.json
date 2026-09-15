@@ -1,6 +1,8 @@
 {
   "version": 1,
-  "id": "bootstrap-health-20260916-03",
-  "task": "health",
-  "requireCuda": true
+  "id": "system-summary-20260916-01",
+  "task": "script",
+  "script": "tasks/system-summary.ps1",
+  "arguments": [],
+  "requireCuda": false
 }
