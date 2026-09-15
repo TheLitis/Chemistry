@@ -17,6 +17,9 @@ jobs:
       - name: Parse bridge and runner PowerShell scripts
         shell: powershell
         run: .\tests\Test-BridgeScripts.ps1
+      - name: Validate controlled runner requests
+        shell: powershell
+        run: .\tests\Test-RunnerRequest.ps1
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
