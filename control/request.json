@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-prepare-20260916-03",
+  "id": "casmi-metadata-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_prepare.py",
-  "arguments": ["--download"],
+  "script": "tasks/casmi_metadata.py",
+  "arguments": [],
   "requireCuda": false
 }
