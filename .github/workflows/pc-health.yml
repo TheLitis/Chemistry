@@ -24,13 +24,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve existing Python
+      - name: Configure runner-service PowerShell policy
         run: |
-          $python = (.\runner\resolve-python.ps1 | Select-Object -Last 1).Trim()
-          if (-not $python) { throw 'Python resolver returned an empty path.' }
-          "CHEMISTRY_PYTHON=$python" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          (Split-Path -Parent $python) | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          & $python --version
+          Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force
+          Get-ExecutionPolicy -List
+
+      - name: Provision job Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
 
       - name: Hardware diagnostics
         run: |
@@ -47,7 +49,7 @@ jobs:
             $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
             if ($cfg.maxRamSmokeGiB) { $maxRam = [double]$cfg.maxRamSmokeGiB }
           }
-          & $env:CHEMISTRY_PYTHON .\runner\compute_smoke.py --output (Join-Path $out 'compute-smoke.json') --max-ram-gib $maxRam
+          python .\runner\compute_smoke.py --output (Join-Path $out 'compute-smoke.json') --max-ram-gib $maxRam
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload health reports
