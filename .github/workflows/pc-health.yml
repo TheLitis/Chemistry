@@ -17,6 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Provision job Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
       - name: Hardware diagnostics
         shell: powershell
         run: |
@@ -34,15 +39,7 @@ jobs:
             $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
             if ($cfg.maxRamSmokeGiB) { $maxRam = [double]$cfg.maxRamSmokeGiB }
           }
-
-          $python = Get-Command python -ErrorAction SilentlyContinue
-          if ($python) {
-            & $python.Source .\runner\compute_smoke.py --output (Join-Path $out 'compute-smoke.json') --max-ram-gib $maxRam
-          } else {
-            $py = Get-Command py -ErrorAction SilentlyContinue
-            if (-not $py) { throw 'Neither python nor py is available to the runner service account.' }
-            & $py.Source -3 .\runner\compute_smoke.py --output (Join-Path $out 'compute-smoke.json') --max-ram-gib $maxRam
-          }
+          python .\runner\compute_smoke.py --output (Join-Path $out 'compute-smoke.json') --max-ram-gib $maxRam
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload health reports
