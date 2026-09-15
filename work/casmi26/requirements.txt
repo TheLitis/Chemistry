@@ -1,5 +1,0 @@
-# Core versions tested in the development environment (Python 3.13).
-numpy==2.3.5
-rdkit==2025.9.4
-# Parquet adapter tested by CI when this dependency is installed.
-pyarrow==21.0.0
