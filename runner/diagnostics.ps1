@@ -6,6 +6,31 @@ param(
 $ErrorActionPreference = 'Stop'
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 
+function Invoke-NativeCapture {
+    param(
+        [Parameter(Mandatory = $true)][string]$Executable,
+        [string[]]$Arguments = @()
+    )
+
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $output = @(& $Executable @Arguments 2>&1)
+        $exitCode = $LASTEXITCODE
+        return [pscustomobject]@{
+            exit_code = $exitCode
+            text = (($output | ForEach-Object { $_.ToString() }) -join "`n").Trim()
+        }
+    } catch {
+        return [pscustomobject]@{
+            exit_code = -1
+            text = "$($_.Exception.GetType().FullName): $($_.Exception.Message)"
+        }
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+}
+
 function Invoke-PythonProbe {
     $probe = @'
 import json
@@ -25,34 +50,63 @@ except Exception as exc:
 print(json.dumps(result))
 '@
 
-    $python = Get-Command python -ErrorAction SilentlyContinue
-    if ($python) {
-        $version = (& $python.Source --version 2>&1) -join ' '
-        $json = (& $python.Source -c $probe 2>&1) -join "`n"
-        if ($LASTEXITCODE -eq 0) {
-            $obj = $json | ConvertFrom-Json
-            $obj | Add-Member -NotePropertyName executable -NotePropertyValue $python.Source -Force
-            $obj | Add-Member -NotePropertyName version -NotePropertyValue $version -Force
-            return $obj
+    $pythonPath = $null
+    $pythonArgs = @()
+    if ($env:CHEMISTRY_PYTHON -and (Test-Path -LiteralPath $env:CHEMISTRY_PYTHON)) {
+        $pythonPath = $env:CHEMISTRY_PYTHON
+    } else {
+        $python = Get-Command python -ErrorAction SilentlyContinue
+        if ($python) {
+            $pythonPath = $python.Source
+        } else {
+            $py = Get-Command py -ErrorAction SilentlyContinue
+            if ($py) {
+                $pythonPath = $py.Source
+                $pythonArgs = @('-3')
+            }
         }
-        return [pscustomobject]@{ available = $false; executable = $python.Source; version = $version; error = $json }
     }
 
-    $py = Get-Command py -ErrorAction SilentlyContinue
-    if ($py) {
-        $version = (& $py.Source -3 --version 2>&1) -join ' '
-        $json = (& $py.Source -3 -c $probe 2>&1) -join "`n"
-        if ($LASTEXITCODE -eq 0) {
-            $obj = $json | ConvertFrom-Json
-            $obj | Add-Member -NotePropertyName executable -NotePropertyValue $py.Source -Force
-            $obj | Add-Member -NotePropertyName launcher_args -NotePropertyValue '-3' -Force
-            $obj | Add-Member -NotePropertyName version -NotePropertyValue $version -Force
-            return $obj
-        }
-        return [pscustomobject]@{ available = $false; executable = $py.Source; launcher_args = '-3'; version = $version; error = $json }
+    if (-not $pythonPath) {
+        return [pscustomobject]@{ available = $false; error = 'python/py not found in PATH and CHEMISTRY_PYTHON is not set' }
     }
 
-    return [pscustomobject]@{ available = $false; error = 'python/py not found in PATH' }
+    $versionResult = Invoke-NativeCapture -Executable $pythonPath -Arguments ($pythonArgs + @('--version'))
+    if ($versionResult.exit_code -ne 0) {
+        return [pscustomobject]@{
+            available = $false
+            executable = $pythonPath
+            version = $versionResult.text
+            error = 'Python version probe failed'
+        }
+    }
+
+    $probeResult = Invoke-NativeCapture -Executable $pythonPath -Arguments ($pythonArgs + @('-c', $probe))
+    if ($probeResult.exit_code -ne 0) {
+        return [pscustomobject]@{
+            available = $false
+            executable = $pythonPath
+            version = $versionResult.text
+            error = $probeResult.text
+        }
+    }
+
+    try {
+        $obj = $probeResult.text | ConvertFrom-Json
+        $obj | Add-Member -NotePropertyName executable -NotePropertyValue $pythonPath -Force
+        $obj | Add-Member -NotePropertyName version -NotePropertyValue $versionResult.text -Force
+        if ($pythonArgs.Count -gt 0) {
+            $obj | Add-Member -NotePropertyName launcher_args -NotePropertyValue ($pythonArgs -join ' ') -Force
+        }
+        return $obj
+    } catch {
+        return [pscustomobject]@{
+            available = $false
+            executable = $pythonPath
+            version = $versionResult.text
+            error = "Python probe returned invalid JSON: $($probeResult.text)"
+        }
+    }
 }
 
 $cpuRows = Get-CimInstance Win32_Processor
@@ -68,11 +122,12 @@ $disks = Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' | ForEach-Objec
 $nvidia = [ordered]@{ available = $false }
 $nvidiaSmi = Get-Command nvidia-smi -ErrorAction SilentlyContinue
 if ($nvidiaSmi) {
-    $banner = (& $nvidiaSmi.Source 2>&1) -join "`n"
-    $query = (& $nvidiaSmi.Source --query-gpu=name,memory.total,memory.free,driver_version --format=csv,noheader,nounits 2>&1)
-    if ($LASTEXITCODE -eq 0) {
+    $bannerResult = Invoke-NativeCapture -Executable $nvidiaSmi.Source
+    $queryResult = Invoke-NativeCapture -Executable $nvidiaSmi.Source -Arguments @('--query-gpu=name,memory.total,memory.free,driver_version', '--format=csv,noheader,nounits')
+    if ($queryResult.exit_code -eq 0) {
         $gpus = @()
-        foreach ($line in $query) {
+        foreach ($line in ($queryResult.text -split "`r?`n")) {
+            if (-not $line.Trim()) { continue }
             $parts = $line -split ',' | ForEach-Object { $_.Trim() }
             if ($parts.Count -ge 4) {
                 $gpus += [ordered]@{
@@ -84,7 +139,7 @@ if ($nvidiaSmi) {
             }
         }
         $cudaVersion = $null
-        if ($banner -match 'CUDA Version:\s*([0-9.]+)') {
+        if ($bannerResult.text -match 'CUDA Version:\s*([0-9.]+)') {
             $cudaVersion = $Matches[1]
         }
         $nvidia = [ordered]@{
@@ -94,7 +149,7 @@ if ($nvidiaSmi) {
             gpus = $gpus
         }
     } else {
-        $nvidia = [ordered]@{ available = $false; executable = $nvidiaSmi.Source; error = ($query -join "`n") }
+        $nvidia = [ordered]@{ available = $false; executable = $nvidiaSmi.Source; error = $queryResult.text }
     }
 }
 
@@ -151,5 +206,8 @@ if ($report.nvidia.available) {
 Write-Host "Python available: $($report.python.available)"
 if ($report.python.torch_available -ne $null) {
     Write-Host "PyTorch: $($report.python.torch_available); CUDA available: $($report.python.cuda_available)"
+}
+if (-not $report.python.available -and $report.python.error) {
+    Write-Host "Python diagnostic error: $($report.python.error)" -ForegroundColor Yellow
 }
 Write-Host "Report: $jsonPath"
