@@ -1,68 +1,101 @@
 # Chemistry PC Bridge
 
-`TheLitis/Chemistry` is a private GitHub repository used as a delivery bridge to a Windows PC.
+`TheLitis/Chemistry` is a private GitHub repository used as a delivery bridge and controlled execution plane for a Windows PC.
 
-The PC runs a small local watcher that keeps the local `main` branch synchronized with `origin/main`. This means files committed to this repository can arrive on the PC automatically without exposing an inbound port, RDP, SSH, or a public listener.
+The existing bridge keeps local `main` synchronized with GitHub without exposing an inbound port. A separate repository-scoped GitHub Actions self-hosted runner named `ChemistryPC` can execute reviewed workflows on the PC and return logs/artifacts to GitHub.
 
-## Local location
-
-By default the repository is cloned to:
+## Local repository
 
 ```text
 %USERPROFILE%\Chemistry
 ```
 
-Delivered work should normally be placed under:
+## File bridge
 
-```text
-work\
-```
+The bridge follows only `main`, applies only safe fast-forward updates, and never evaluates or executes files it receives. If the local checkout is dirty, diverged, or on another branch, synchronization pauses rather than overwriting local work.
 
-## One-time setup on the PC
-
-Open PowerShell and run:
-
-```powershell
-gh auth status
-cd $HOME
-if (-not (Test-Path "$HOME\Chemistry\.git")) {
-    gh repo clone TheLitis/Chemistry "$HOME\Chemistry"
-} else {
-    git -C "$HOME\Chemistry" pull --ff-only origin main
-}
-
-powershell -ExecutionPolicy Bypass -File "$HOME\Chemistry\bridge\install.ps1"
-```
-
-After installation, `ChemistryBridge` starts automatically when you sign in to Windows and checks GitHub for updates every 10 seconds.
-
-## How synchronization behaves
-
-- Only the `main` branch is followed.
-- Incoming changes are applied only with a fast-forward update.
-- If the local repository has uncommitted changes, is on another branch, has local-only commits, or has diverged from `origin/main`, the bridge does **not** overwrite anything. It pauses synchronization and records the reason in the log.
-- The bridge does not execute files received from GitHub. It only synchronizes the repository.
-
-## Log
+Bridge log:
 
 ```powershell
 Get-Content "$env:LOCALAPPDATA\ChemistryBridge\bridge.log" -Tail 50 -Wait
 ```
 
-## Reinstall / update the bridge
-
-After pulling the latest repository version, run:
+Reinstall bridge:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File "$HOME\Chemistry\bridge\install.ps1"
 ```
 
-## Remove the bridge
+Remove bridge:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File "$HOME\Chemistry\bridge\uninstall.ps1"
 ```
 
+## One-time ChemistryPC execution bootstrap
+
+The runner installer is intentionally separate from the file bridge. It installs the official GitHub Actions Windows x64 runner at:
+
+```text
+C:\actions-runner\ChemistryPC
+```
+
+Persistent machine state/data is kept outside Git at:
+
+```text
+C:\ProgramData\ChemistryRunner
+```
+
+From a normal PowerShell window, run this one command. It first fast-forwards the local repository, then opens one elevated PowerShell window for the service installation:
+
+```powershell
+git -C "$HOME\Chemistry" pull --ff-only origin main; Start-Process powershell.exe -Verb RunAs -Wait -ArgumentList '-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',"$HOME\Chemistry\runner\install.ps1"
+```
+
+The installer:
+
+- validates `gh` authentication;
+- obtains short-lived runner download/registration information at runtime;
+- downloads the official current Windows x64 GitHub Actions runner;
+- registers only against `TheLitis/Chemistry` as `ChemistryPC`;
+- adds the custom `ChemistryPC` label;
+- runs it as a Windows service under `NT AUTHORITY\NETWORK SERVICE`;
+- configures automatic service startup;
+- stores no registration token in Git;
+- creates `C:\ProgramData\ChemistryRunner\machine.json` and persistent data/cache directories.
+
+Re-running the installer is safe when the existing runner service is healthy. For an explicitly broken installation, run the installer with `-Repair`.
+
+## Runner health
+
+After bootstrap:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "$HOME\Chemistry\runner\health.ps1"
+```
+
+Healthy output requires local runner configuration, a running Windows service, and an online GitHub runner named `ChemistryPC`.
+
+The manually dispatched `ChemistryPC health` workflow targets only:
+
+```yaml
+runs-on: [self-hosted, Windows, X64, ChemistryPC]
+```
+
+It provisions a job-local Python runtime, records CPU/RAM/disk/NVIDIA/Python/PyTorch visibility, runs bounded CPU/RAM compute checks and optional CUDA compute when a CUDA-capable PyTorch is available, then uploads JSON reports as workflow artifacts.
+
+## Remove the execution runner
+
+Run in an elevated PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "$HOME\Chemistry\runner\uninstall.ps1"
+```
+
+Persistent machine data is kept by default. Add `-RemoveData` only if you intentionally want to delete `C:\ProgramData\ChemistryRunner` too.
+
 ## Security model
 
-This repository is private. The PC initiates outbound connections to GitHub; no inbound network port is opened. The default bridge intentionally does not provide remote shell execution. If remote builds/tests are needed later, add a separately labeled GitHub Actions self-hosted runner with restricted workflows rather than turning the sync process into an unrestricted command channel.
+No SSH, RDP, WinRM, or other inbound remote-control port is opened. The private repository is the execution control plane. PC workflows use the `ChemistryPC` label and are not triggered by untrusted pull requests. The execution design deliberately avoids an arbitrary shell-text workflow input: executable tasks must exist as reviewed repository code/workflows.
+
+The runner service is not intended to grant administrator privileges to normal jobs. The one-time bootstrap itself requires elevation because Windows service registration does.
