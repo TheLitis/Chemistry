@@ -1,1 +1,0 @@
-ChemistryPC integration health trigger: install CUDA PyTorch and require GPU compute
