@@ -3,7 +3,12 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $files = @(
     (Join-Path $repoRoot 'bridge\install.ps1'),
-    (Join-Path $repoRoot 'bridge\sync.ps1')
+    (Join-Path $repoRoot 'bridge\sync.ps1'),
+    (Join-Path $repoRoot 'bridge\uninstall.ps1'),
+    (Join-Path $repoRoot 'runner\install.ps1'),
+    (Join-Path $repoRoot 'runner\health.ps1'),
+    (Join-Path $repoRoot 'runner\uninstall.ps1'),
+    (Join-Path $repoRoot 'runner\diagnostics.ps1')
 )
 
 $regressionSource = @'
@@ -25,6 +30,12 @@ if ($regressionErrors.Count -eq 0) {
 $failed = $false
 
 foreach ($file in $files) {
+    if (-not (Test-Path $file)) {
+        $failed = $true
+        Write-Host "Required PowerShell script is missing: $file" -ForegroundColor Red
+        continue
+    }
+
     $tokens = $null
     $errors = $null
     [System.Management.Automation.Language.Parser]::ParseFile($file, [ref]$tokens, [ref]$errors) | Out-Null
@@ -42,4 +53,4 @@ if ($failed) {
     exit 1
 }
 
-Write-Host 'Regression fixture is rejected and bridge PowerShell scripts parse successfully.'
+Write-Host 'Regression fixture is rejected and all bridge/runner PowerShell scripts parse successfully.'
