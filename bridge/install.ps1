@@ -9,7 +9,10 @@ if (-not (Test-Path $BridgeScript)) {
     throw "Bridge script not found: $BridgeScript"
 }
 
-$cmd = "@echo off`r`nstart \"ChemistryBridge\" /min powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"$BridgeScript\"`r`n"
+$cmd = @(
+    '@echo off'
+    "start `"ChemistryBridge`" /min powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$BridgeScript`""
+)
 Set-Content -Path $Launcher -Value $cmd -Encoding ASCII
 
 Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" |
