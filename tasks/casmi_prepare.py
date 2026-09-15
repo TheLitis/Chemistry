@@ -78,7 +78,7 @@ def clone_embedded_runtime(base: Path, target: Path) -> Path:
         raise RuntimeError('Expected one embedded CPython path configuration')
     for file in base.iterdir():
         if file.is_file() and (file.name in ('python.exe','pythonw.exe') or
-                              file.suffix.lower() == '.dll' or
+                              file.suffix.lower() in ('.dll', '.pyd') or
                               (file.name.startswith('python') and file.suffix == '.zip')):
             shutil.copy2(file, target/file.name)
     lines = [line for line in pth[0].read_text(encoding='utf-8-sig').splitlines()
