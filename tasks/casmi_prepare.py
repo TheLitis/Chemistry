@@ -70,6 +70,26 @@ def run(args: list[str], *, env: dict, timeout: int, log: Path, expose: bool=Tru
         return {'exit_code':124,'error':'timeout'}
 
 
+def clone_embedded_runtime(base: Path, target: Path) -> Path:
+    """Isolate packages for the embeddable CPython distribution (no venv)."""
+    target.mkdir(parents=True, exist_ok=True)
+    pth = list(base.glob('python*._pth'))
+    if len(pth) != 1:
+        raise RuntimeError('Expected one embedded CPython path configuration')
+    for file in base.iterdir():
+        if file.is_file() and (file.name in ('python.exe','pythonw.exe') or
+                              file.suffix.lower() == '.dll' or
+                              (file.name.startswith('python') and file.suffix == '.zip')):
+            shutil.copy2(file, target/file.name)
+    lines = [line for line in pth[0].read_text(encoding='utf-8-sig').splitlines()
+             if line.strip() and not line.lstrip().startswith('#') and line.strip() != 'import site'
+             and 'site-packages' not in line and line.strip() != 'Lib']
+    lines += ['Lib', 'Lib/site-packages', str(base/'Lib'), str(base/'Lib/site-packages'), 'import site']
+    (target/pth[0].name).write_text('\n'.join(lines)+'\n', encoding='utf-8')
+    (target/'Lib/site-packages').mkdir(parents=True, exist_ok=True)
+    return target/'python.exe'
+
+
 def main() -> int:
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--download',action='store_true')
@@ -79,32 +99,31 @@ def main() -> int:
     output=Path(os.environ['CHEMISTRY_REQUEST_OUTPUT']);output.mkdir(parents=True,exist_ok=True)
     env=kaggle_environment(state,os.environ)
     env['PYTHONUTF8']='1';env['PYTHONIOENCODING']='utf-8'
-    venv=state/'envs'/'casmi26'; python=venv/'Scripts'/'python.exe'
+    venv=state/'envs'/'casmi26'
+    python=clone_embedded_runtime(Path(sys.executable).parent, venv)
     report={'utc':dt.datetime.now(dt.timezone.utc).isoformat(),'request_id':os.environ.get('CHEMISTRY_REQUEST_ID'),
             'official_score':None,'real_data_predictions':False,'environment':str(venv)}
-    if not python.exists():
-        venv.parent.mkdir(parents=True,exist_ok=True)
-        result=run([sys.executable,'-m','venv','--system-site-packages',str(venv)],env=env,timeout=180,log=output/'venv.log')
-        if result['exit_code']: raise RuntimeError('Isolated environment creation failed')
-    install=run([str(python),'-m','pip','install','--disable-pip-version-check','-r',str(repo/'work/casmi26/requirements.txt'),
-                 'kaggle==2.2.4','pytest'],env=env,timeout=900,log=output/'casmi-install.log')
+    install=run([str(python),'-m','pip','install','--disable-pip-version-check',
+                 '--target',str(venv/'Lib/site-packages'),'--upgrade',
+                 '-r',str(repo/'work/casmi26/requirements.txt'),'kaggle==2.2.4','pytest'],
+                env=env,timeout=900,log=output/'casmi-install.log')
     report['dependencies_exit_code']=install['exit_code']
     if install['exit_code']: raise RuntimeError('CASMI dependencies failed to install')
     test=run([str(python),'-m','pytest','-q',str(repo/'work/casmi26/tests')],env=env,timeout=180,log=output/'casmi-tests.log')
     report['tests_exit_code']=test['exit_code']
-    cli=venv/'Scripts'/'kaggle.exe'
-    listed=run([str(cli),'competitions','files',SLUG,'--page-size','200','-v'],env=env,timeout=60,
+    cli=[str(python),'-c','from kaggle.cli import main; main()']
+    listed=run(cli+['competitions','files',SLUG,'--page-size','200','-v'],env=env,timeout=60,
                log=output/'kaggle-files.log',expose=False)
     report['kaggle_files_exit_code']=listed['exit_code']
     if listed['exit_code']==0:
-        safe=run([str(cli),'competitions','files',SLUG,'--page-size','200','-v'],env=env,timeout=60,
+        safe=run(cli+['competitions','files',SLUG,'--page-size','200','-v'],env=env,timeout=60,
                  log=output/'kaggle-files.csv',expose=True)
         report['kaggle_files_confirmed']=safe['exit_code']==0
     if args.download and listed['exit_code']==0:
         if shutil.disk_usage(state).free < 30*2**30:
             raise RuntimeError('Less than 30 GiB free; not starting download')
         data=state/'data'/'casmi26'/'raw';data.mkdir(parents=True,exist_ok=True)
-        downloaded=run([str(cli),'competitions','download',SLUG,'-p',str(data)],env=env,timeout=1800,
+        downloaded=run(cli+['competitions','download',SLUG,'-p',str(data)],env=env,timeout=1800,
                        log=output/'kaggle-download.log',expose=False)
         report['download_exit_code']=downloaded['exit_code']
     edge=next((p for p in (Path(r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'),
