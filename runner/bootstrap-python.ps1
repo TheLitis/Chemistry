@@ -19,6 +19,52 @@ function Test-Python([string]$Path) {
     }
 }
 
+function Write-PythonLaunchDiagnostics([string]$Path) {
+    Write-Host '--- Embedded Python launch diagnostics ---'
+    Write-Host "Identity: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)"
+    Write-Host "Python path exists: $(Test-Path -LiteralPath $Path)"
+    Write-Host "Python root: $PythonRoot"
+
+    $interesting = @('python.exe', 'python313.dll', 'python313.zip', 'python313._pth', 'vcruntime140.dll', 'vcruntime140_1.dll')
+    foreach ($name in $interesting) {
+        $item = Join-Path $PythonRoot $name
+        if (Test-Path -LiteralPath $item) {
+            $info = Get-Item -LiteralPath $item
+            Write-Host "FILE $name present size=$($info.Length)"
+        } else {
+            Write-Host "FILE $name MISSING"
+        }
+    }
+
+    try {
+        $acl = Get-Acl -LiteralPath $PythonRoot
+        Write-Host "Owner: $($acl.Owner)"
+        foreach ($entry in $acl.Access) {
+            if ($entry.IdentityReference -match 'NETWORK SERVICE|S-1-5-20|Users|SYSTEM|Administrators') {
+                Write-Host "ACL $($entry.IdentityReference): $($entry.FileSystemRights) $($entry.AccessControlType) inherited=$($entry.IsInherited)"
+            }
+        }
+    } catch {
+        Write-Host "ACL diagnostic failed: $($_.Exception.Message)"
+    }
+
+    $stdout = Join-Path $env:TEMP ("chemistry-python-stdout-{0}.txt" -f [guid]::NewGuid())
+    $stderr = Join-Path $env:TEMP ("chemistry-python-stderr-{0}.txt" -f [guid]::NewGuid())
+    try {
+        $process = Start-Process -FilePath $Path -ArgumentList '--version' -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+        $outText = if (Test-Path $stdout) { (Get-Content -LiteralPath $stdout -Raw -ErrorAction SilentlyContinue).Trim() } else { '' }
+        $errText = if (Test-Path $stderr) { (Get-Content -LiteralPath $stderr -Raw -ErrorAction SilentlyContinue).Trim() } else { '' }
+        Write-Host "python --version exit=$($process.ExitCode)"
+        Write-Host "python stdout: $outText"
+        Write-Host "python stderr: $errText"
+    } catch {
+        Write-Host "python process launch exception: $($_.Exception.GetType().FullName): $($_.Exception.Message)"
+    } finally {
+        Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
+    }
+    Write-Host '--- End embedded Python diagnostics ---'
+}
+
 if (Test-Python $PythonExe) {
     Write-Host "Chemistry Python already available: $PythonExe"
     & $PythonExe --version
@@ -50,6 +96,7 @@ New-Item -ItemType Directory -Force -Path $PythonRoot | Out-Null
 Expand-Archive -LiteralPath $archive -DestinationPath $PythonRoot -Force
 
 if (-not (Test-Python $PythonExe)) {
+    Write-PythonLaunchDiagnostics $PythonExe
     throw "Embedded Python extracted but $PythonExe is not usable."
 }
 
