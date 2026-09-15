@@ -1,0 +1,56 @@
+name: ChemistryPC health
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+actions:
+
+concurrency:
+  group: chemistry-pc-exclusive
+  cancel-in-progress: false
+
+jobs:
+  health:
+    runs-on: [self-hosted, Windows, X64, ChemistryPC]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hardware diagnostics
+        shell: powershell
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'chemistry-health'
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          .\runner\diagnostics.ps1 -OutputDirectory $out
+
+      - name: Compute smoke test
+        shell: powershell
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'chemistry-health'
+          $cfgPath = Join-Path $env:ProgramData 'ChemistryRunner\machine.json'
+          $maxRam = 8
+          if (Test-Path $cfgPath) {
+            $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
+            if ($cfg.maxRamSmokeGiB) { $maxRam = [double]$cfg.maxRamSmokeGiB }
+          }
+
+          $python = Get-Command python -ErrorAction SilentlyContinue
+          if ($python) {
+            & $python.Source .\runner\compute_smoke.py --output (Join-Path $out 'compute-smoke.json') --max-ram-gib $maxRam
+          } else {
+            $py = Get-Command py -ErrorAction SilentlyContinue
+            if (-not $py) { throw 'Neither python nor py is available to the runner service account.' }
+            & $py.Source -3 .\runner\compute_smoke.py --output (Join-Path $out 'compute-smoke.json') --max-ram-gib $maxRam
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload health reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chemistry-pc-health-${{ github.run_id }}
+          path: ${{ runner.temp }}\chemistry-health\*
+          if-no-files-found: warn
