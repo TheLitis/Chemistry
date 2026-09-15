@@ -68,8 +68,11 @@ function Invoke-LoggedNative {
     $previousPreference = $ErrorActionPreference
     try {
         $ErrorActionPreference = 'Continue'
-        & $Executable @Arguments 2>&1 | Tee-Object -FilePath $LogPath
-        return [int]$LASTEXITCODE
+        & $Executable @Arguments 2>&1 |
+            Tee-Object -FilePath $LogPath |
+            ForEach-Object { Write-Host $_ }
+        $code = [int]$LASTEXITCODE
+        return $code
     } finally {
         $ErrorActionPreference = $previousPreference
     }
