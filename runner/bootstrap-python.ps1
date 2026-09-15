@@ -52,8 +52,10 @@ function Write-PythonLaunchDiagnostics([string]$Path) {
     $stderr = Join-Path $env:TEMP ("chemistry-python-stderr-{0}.txt" -f [guid]::NewGuid())
     try {
         $process = Start-Process -FilePath $Path -ArgumentList '--version' -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdout -RedirectStandardError $stderr
-        $outText = if (Test-Path $stdout) { (Get-Content -LiteralPath $stdout -Raw -ErrorAction SilentlyContinue).Trim() } else { '' }
-        $errText = if (Test-Path $stderr) { (Get-Content -LiteralPath $stderr -Raw -ErrorAction SilentlyContinue).Trim() } else { '' }
+        $outRaw = if (Test-Path $stdout) { Get-Content -LiteralPath $stdout -Raw -ErrorAction SilentlyContinue } else { $null }
+        $errRaw = if (Test-Path $stderr) { Get-Content -LiteralPath $stderr -Raw -ErrorAction SilentlyContinue } else { $null }
+        $outText = if ($null -eq $outRaw) { '' } else { $outRaw.Trim() }
+        $errText = if ($null -eq $errRaw) { '' } else { $errRaw.Trim() }
         Write-Host "python --version exit=$($process.ExitCode)"
         Write-Host "python stdout: $outText"
         Write-Host "python stderr: $errText"
