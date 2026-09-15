@@ -48,11 +48,13 @@ function Assert-Request {
         }
     }
 
-    if ($Request.arguments -ne $null -and $Request.arguments -isnot [System.Array]) {
-        throw 'arguments must be a JSON array of strings.'
-    }
-    foreach ($argument in @($Request.arguments)) {
-        if ($argument -isnot [string]) { throw 'Every arguments entry must be a string.' }
+    if ($null -ne $Request.arguments) {
+        if ($Request.arguments -isnot [System.Array]) {
+            throw 'arguments must be a JSON array of strings.'
+        }
+        foreach ($argument in $Request.arguments) {
+            if ($argument -isnot [string]) { throw 'Every arguments entry must be a string.' }
+        }
     }
 }
 
@@ -159,7 +161,7 @@ try {
         'script' {
             $relative = ([string]$request.script).Replace('/', '\')
             $scriptPath = [System.IO.Path]::GetFullPath((Join-Path $RepoRoot $relative))
-            $arguments = @($request.arguments | ForEach-Object { [string]$_ })
+            $arguments = if ($null -eq $request.arguments) { @() } else { @($request.arguments | ForEach-Object { [string]$_ }) }
             $extension = [System.IO.Path]::GetExtension($scriptPath).ToLowerInvariant()
             if ($extension -eq '.ps1') {
                 $exitCode = Invoke-LoggedNative -Executable 'powershell.exe' -Arguments (@('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $scriptPath) + $arguments) -LogPath (Join-Path $OutputDirectory 'script.log')
