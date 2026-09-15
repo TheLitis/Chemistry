@@ -20,6 +20,20 @@ function Test-Python([string]$Path) {
     }
 }
 
+function Test-Pip([string]$Path) {
+    if (-not (Test-Python $Path)) { return $false }
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & $Path -m pip --version *> $null
+        return ($LASTEXITCODE -eq 0)
+    } catch {
+        return $false
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+}
+
 function Write-PythonLaunchDiagnostics([string]$Path) {
     Write-Host '--- Embedded Python launch diagnostics ---'
     Write-Host "Identity: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)"
@@ -68,13 +82,12 @@ function Write-PythonLaunchDiagnostics([string]$Path) {
     Write-Host '--- End embedded Python diagnostics ---'
 }
 
-if (Test-Python $PythonExe) {
+if ((Test-Python $PythonExe) -and (Test-Pip $PythonExe)) {
     Write-Host "Chemistry Python already available: $PythonExe"
     & $PythonExe --version
-    if (& $PythonExe -m pip --version 2>$null) {
-        Write-Output $PythonExe
-        exit 0
-    }
+    & $PythonExe -m pip --version
+    Write-Output $PythonExe
+    exit 0
 }
 
 New-Item -ItemType Directory -Force -Path $StateRoot, $CacheRoot | Out-Null
