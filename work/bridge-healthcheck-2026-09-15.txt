@@ -1,0 +1,3 @@
+Chemistry bridge healthcheck
+Created remotely via GitHub on 2026-09-15.
+If this file appears on the PC without a manual git pull, GitHub -> PC synchronization is working.
