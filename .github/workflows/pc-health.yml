@@ -6,8 +6,6 @@ on:
 permissions:
   contents: read
 
-actions:
-
 concurrency:
   group: chemistry-pc-exclusive
   cancel-in-progress: false
