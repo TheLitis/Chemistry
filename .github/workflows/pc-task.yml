@@ -1,0 +1,41 @@
+name: ChemistryPC task
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'control/request.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chemistry-pc-exclusive
+  cancel-in-progress: false
+
+jobs:
+  task:
+    runs-on: [self-hosted, Windows, X64, ChemistryPC]
+    timeout-minutes: 240
+    defaults:
+      run:
+        shell: powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ". '{0}'"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Execute validated request
+        run: |
+          $request = Join-Path $env:GITHUB_WORKSPACE 'control\request.json'
+          if (-not (Test-Path -LiteralPath $request)) { throw "Request file is missing: $request" }
+          $out = Join-Path $env:RUNNER_TEMP 'chemistry-task'
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          .\runner\run-request.ps1 -RequestPath $request -OutputDirectory $out
+
+      - name: Upload task result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chemistry-pc-task-${{ github.run_id }}
+          path: ${{ runner.temp }}\chemistry-task\*
+          if-no-files-found: warn
