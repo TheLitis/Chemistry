@@ -12,8 +12,9 @@ $CacheRoot = Join-Path $StateRoot 'cache\python-bootstrap'
 function Test-Python([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path)) { return $false }
     try {
-        $text = (& $Path -c 'import sys; print("%d.%d.%d" % sys.version_info[:3])' 2>$null | Select-Object -First 1)
-        return ($LASTEXITCODE -eq 0 -and $text -match '^\d+\.\d+\.\d+$' -and [version]$text -ge [version]'3.11.0')
+        $text = ((& $Path --version 2>&1) -join ' ').Trim()
+        if ($LASTEXITCODE -ne 0 -or $text -notmatch 'Python\s+(\d+\.\d+\.\d+)') { return $false }
+        return ([version]$Matches[1] -ge [version]'3.11.0')
     } catch {
         return $false
     }
