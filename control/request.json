@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r06-kaggle-resume-slug-20260916-01",
+  "id": "casmi-r06-kernel-diagnose-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_r06_kaggle_resume.py",
+  "script": "tasks/casmi_r06_kernel_diagnose.py",
   "arguments": [],
   "requireCuda": false
 }
