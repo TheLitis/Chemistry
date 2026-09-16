@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r06-kaggle-v3-submit-20260916-01",
+  "id": "casmi-r06-kaggle-v3-status-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_r06_kaggle_v3.py",
-  "arguments": ["--stage", "submit"],
+  "script": "tasks/casmi_r06_v3_status.py",
+  "arguments": [],
   "requireCuda": false
 }
