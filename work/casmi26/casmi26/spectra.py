@@ -15,11 +15,11 @@ ALIASES = {
     'compound_id': ('compound_id', 'molecule_id', 'compound', 'molecule', 'sample_id', 'id'),
     'precursor_mz': ('precursor_mz', 'precursor_mass', 'pepmass', 'parent_mz'),
     'adduct': ('adduct', 'precursor_type', 'ion_type'),
-    'mz': ('mz', 'mzs', 'm/z', 'mz_array'),
-    'intensity': ('intensity', 'intensities', 'intensity_array'),
+    'mz': ('ms2_mzs', 'mz', 'mzs', 'm/z', 'mz_array'),
+    'intensity': ('ms2_normalized_intensities', 'intensity', 'intensities', 'intensity_array'),
     'peaks': ('peaks', 'spectrum'),
-    'smiles': ('smiles', 'canonical_smiles'),
-    'collision_energy': ('collision_energy', 'ce'),
+    'smiles': ('normalized_smiles', 'smiles', 'canonical_smiles'),
+    'collision_energy': ('collision_energy_ev', 'collision_energy', 'ce'),
 }
 EXTENSIONS = {'.jsonl', '.ndjson', '.mgf', '.csv', '.tsv', '.parquet'}
 
@@ -102,6 +102,9 @@ class Spectrum:
     peaks: np.ndarray
     collision_energy: float | None = None
     smiles: str | None = None
+    collision_energies: tuple[float, ...] = ()
+    instrument_type: str | None = None
+    base_peak_intensity: float | None = None
 
     @property
     def neutral(self) -> float:
@@ -144,13 +147,35 @@ def from_row(row: dict, columns: dict | None = None, labeled: bool = False) -> S
     intensities = np.bincount(inverse, weights=raw[:, 1])
     peaks = np.column_stack((mz, intensities / intensities.sum()))
     ce = value(row, 'collision_energy', columns, required=False)
-    try:
-        ce = float(ce) if ce is not None else None
-        if ce is not None and not np.isfinite(ce):
-            ce = None
-    except (ValueError, TypeError):
-        ce = None  # NCE strings are not silently equated with numeric eV values.
-    return Spectrum(str(compound_id), precursor, adduct, peaks, ce, smiles)
+    energies = ()
+    if ce is not None:
+        try:
+            if isinstance(ce, str) and ce.strip().startswith('['):
+                ce = json.loads(ce)
+            vector = ce if isinstance(ce, (list, tuple, np.ndarray)) else [ce]
+            energies = tuple(float(x) for x in vector)
+            if not all(np.isfinite(x) and x >= 0 for x in energies):
+                raise ValueError('Invalid collision energy')
+        except (ValueError, TypeError):
+            # Explicit eV arrays must parse; legacy free-text energies can be absent.
+            if 'collision_energy_ev' in row:
+                raise ValueError('Invalid collision_energy_ev list')
+            energies = ()
+    polarity = str(row.get('ionization_mode', '')).strip().lower()
+    if polarity in ('positive', 'negative'):
+        expected = 1 if polarity == 'positive' else -1
+        observed = 1 if adduct_spec(adduct)[1] > 0 else -1
+        if expected != observed:
+            raise ValueError('Ionization polarity and adduct charge disagree')
+    intensity = row.get('base_peak_intensity')
+    if intensity is not None:
+        intensity = float(intensity)
+        if not np.isfinite(intensity) or intensity < 0:
+            raise ValueError('Invalid base_peak_intensity')
+    return Spectrum(str(compound_id), precursor, adduct, peaks,
+                    energies[0] if len(energies) == 1 else None, smiles,
+                    energies, row.get('instrument_type'), intensity)
+
 
 
 def read_spectra(path: Path, columns: dict | None = None, labeled: bool = False) -> Iterator[Spectrum]:

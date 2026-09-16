@@ -12,6 +12,8 @@ from rdkit.Chem import rdMolDescriptors
 
 PROTON = 1.007276466621
 ELECTRON = 0.000548579909
+WATER = 18.01056468403
+FORMIC_ACID = 46.0054793036
 # (molecular multiplicity, signed charge, total mass added before dividing by |z|)
 ADDUCTS = {
     '[M+H]+': (1, 1, PROTON), '[M-H]-': (1, -1, -PROTON),
@@ -19,6 +21,10 @@ ADDUCTS = {
     '[M+NH4]+': (1, 1, 18.033825553), '[M+Cl]-': (1, -1, 34.969401262),
     '[M+2H]2+': (1, 2, 2*PROTON), '[M-2H]2-': (1, -2, -2*PROTON),
     '[2M+H]+': (2, 1, PROTON), '[2M-H]-': (2, -1, -PROTON),
+    '[M-H2O+H]+': (1, 1, PROTON-WATER),
+    '[M-2H2O+H]+': (1, 1, PROTON-2*WATER),
+    '[M-H2O-H]-': (1, -1, -PROTON-WATER),
+    '[M+CH2O2-H]-': (1, -1, FORMIC_ACID-PROTON),
     '[M]+': (1, 1, -ELECTRON), '[M]-': (1, -1, ELECTRON),
 }
 
@@ -71,7 +77,7 @@ def info(smiles: str) -> MoleculeInfo:
 
 
 def exact_match(prediction: str, target: str) -> bool:
-    """Local graph diagnostic, NOT the unverified official CASMI26 metric."""
+    """Local graph diagnostic; use metric.structure_key for competition matching."""
     return canonical(prediction) == canonical(target)
 
 

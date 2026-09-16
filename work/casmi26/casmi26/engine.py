@@ -1,7 +1,7 @@
 """Disk-backed reference search, joint spectrum decisions and strict output."""
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 from dataclasses import asdict, dataclass
 import csv
 import hashlib
@@ -17,9 +17,10 @@ from rdkit import rdBase
 
 from . import __version__
 from .chemistry import canonical, fragment_explanation, info, proposals
-from .spectra import Spectrum, data_files, read_spectra, records, spectral_score, value
+from .spectra import Spectrum, data_files, read_spectra, records, spectral_score, value, from_row
+from .metric import distinct_guesses, structure_key
 
-INDEX_VERSION = 1
+INDEX_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -31,11 +32,21 @@ class Config:
     # The unvalidated graph heuristic is opt-in; default scores use references only.
     isomer_budget: int = 0
     fragment_weight: float = .3
+    top_k: int = 1  # programmatic backwards compatibility; CLI defaults to 25
+    curate_training: bool = False
+    training_precursor_ppm: float = 50.0
+    neural_weight: float = .5
 
     def __post_init__(self):
         for v in (self.precursor_ppm, self.precursor_da, self.fragment_ppm, self.fragment_da):
             if not np.isfinite(v) or v <= 0:
                 raise ValueError('Mass tolerances must be finite and positive')
+        if not 0 <= self.neural_weight <= 1:
+            raise ValueError('neural_weight must be in 0..1')
+        if not 1 <= self.top_k <= 25:
+            raise ValueError('top_k must be in 1..25')
+        if not np.isfinite(self.training_precursor_ppm) or self.training_precursor_ppm <= 0:
+            raise ValueError('Invalid training precursor tolerance')
         if self.isomer_budget < 0 or not 0 <= self.fragment_weight <= 1:
             raise ValueError('Invalid isomer budget or fragment weight')
 
@@ -72,9 +83,10 @@ def atomic_text(path: Path, text: str):
             os.unlink(name)
 
 
-def _prepare_library(train: Path, cache: Path, columns: dict, candidates: Path | None):
+def _prepare_library(train: Path, cache: Path, columns: dict, candidates: Path | None, config: Config):
     identity = {
         'index_version': INDEX_VERSION, 'rdkit': rdBase.rdkitVersion,
+        'curate_training': config.curate_training, 'training_precursor_ppm': config.training_precursor_ppm,
         'columns': columns, 'train': digest(train),
         'candidates': digest(candidates) if candidates else None,
     }
@@ -95,15 +107,25 @@ def _prepare_library(train: Path, cache: Path, columns: dict, candidates: Path |
     try:
         db.executescript('''
             CREATE TABLE molecules(smiles TEXT PRIMARY KEY, mass REAL NOT NULL, formula TEXT NOT NULL);
-            CREATE INDEX mass_index ON molecules(mass);
             CREATE TABLE spectra(smiles TEXT NOT NULL, precursor REAL NOT NULL,
                                  adduct TEXT NOT NULL, ce REAL, peaks BLOB NOT NULL);
-            CREATE INDEX spectrum_molecule ON spectra(smiles);
             CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
         ''')
-        n = 0
-        for s in read_spectra(train, columns, labeled=True):
-            m = info(s.smiles)
+        n, seen, rejected = 0, 0, Counter()
+        for row in records(train):
+            seen += 1
+            try:
+                s = from_row(row, columns, labeled=True)
+                m = info(s.smiles)
+                if config.curate_training and abs(s.neutral-m.mass) > max(.003, m.mass*config.training_precursor_ppm*1e-6):
+                    rejected['precursor_mass_inconsistent'] += 1
+                    continue
+            except (ValueError, TypeError, KeyError) as exc:
+                if not config.curate_training:
+                    raise
+                reason = 'unsupported_adduct' if 'Unsupported adduct' in str(exc) else 'invalid_structure_or_spectrum'
+                rejected[reason] += 1
+                continue
             db.execute('INSERT OR IGNORE INTO molecules VALUES(?,?,?)', (m.smiles, m.mass, m.formula))
             blob = zlib.compress(s.peaks.astype('<f8').tobytes(), 1)
             db.execute('INSERT INTO spectra VALUES(?,?,?,?,?)',
@@ -117,6 +139,8 @@ def _prepare_library(train: Path, cache: Path, columns: dict, candidates: Path |
             for row in records(candidates):
                 m = info(str(value(row, 'smiles', columns)))
                 db.execute('INSERT OR IGNORE INTO molecules VALUES(?,?,?)', (m.smiles, m.mass, m.formula))
+        db.executescript('CREATE INDEX mass_index ON molecules(mass); CREATE INDEX spectrum_molecule ON spectra(smiles);')
+        db.execute('INSERT INTO meta VALUES(?,?)', ('curation', json.dumps({'seen': seen, 'accepted': n, 'rejected': dict(rejected)})))
         db.execute('INSERT INTO meta VALUES(?,?)', ('signature', signature))
         db.execute('INSERT INTO meta VALUES(?,?)', ('spectra', str(n)))
         db.commit()
@@ -169,7 +193,7 @@ def _group_candidates(db, group: list[Spectrum], config: Config):
     return [r[0] for r in candidates], center
 
 
-def _rank(db, group, config: Config):
+def _rank(db, group, config: Config, ranker=None):
     candidates, mass = _group_candidates(db, group, config)
     scores = {}
     for smiles in candidates:
@@ -184,7 +208,6 @@ def _rank(db, group, config: Config):
         scores[smiles] = {'reference_score': float(by_query.mean()), 'source': 'reference_or_catalog'}
     generated = set()
     if config.isomer_budget:
-        # Seed from the strongest available structures; do not read unknown labels.
         seeds = sorted(scores, key=lambda s: (-scores[s]['reference_score'], s))[:8]
         for seed in seeds:
             for s in proposals(seed, config.isomer_budget):
@@ -195,32 +218,45 @@ def _rank(db, group, config: Config):
                     break
             if len(generated) >= config.isomer_budget:
                 break
+    neural_scores = ranker.scores(group, list(scores)) if ranker is not None else {}
     for s, record in scores.items():
         explained = float(np.mean([fragment_explanation(s, q, config.fragment_ppm, config.fragment_da)
                                    for q in group])) if config.isomer_budget else 0.0
         record['fragment_heuristic'] = explained
         w = config.fragment_weight if config.isomer_budget else 0.0
         record['score'] = (1-w)*record['reference_score'] + w*explained
+        record['fingerprint_score'] = neural_scores.get(s)
+        if ranker is not None:
+            record['score'] = (1-config.neural_weight)*record['score'] + config.neural_weight*neural_scores[s]
     ranking = sorted(scores, key=lambda s: (-scores[s]['score'], s))
-    best = ranking[0]
-    return best, {
+    selected = distinct_guesses(ranking, config.top_k)
+    if not selected:
+        raise ValueError('No InChI-compatible structural candidate')
+    best = selected[0]
+    return ';'.join(selected), {
+        'returned_candidates': len(selected),
         'spectra_used': len(group), 'neutral_mass': mass,
         'candidate_count': len(scores), 'generated_candidate_count': len(generated),
         'selected_source': scores[best]['source'], 'score_is_probability': False,
         'top1_score': scores[best]['score'],
         'score_margin': scores[best]['score']-scores[ranking[1]]['score'] if len(ranking) > 1 else None,
         'zero_spectral_evidence': all(r['reference_score'] == 0 for r in scores.values()),
-        'top_candidates_for_audit_only': [{'smiles': s, **scores[s]} for s in ranking[:10]],
+        'top_candidates_for_audit_only': [{'smiles': s, **scores[s]} for s in ranking[:25]],
     }
 
 
 def predict(test: Path, train: Path, sample_submission: Path, output: Path, *,
             cache: Path | None = None, columns: dict | None = None, config: Config | None = None,
             candidates: Path | None = None, id_column: str | None = None,
-            prediction_column: str | None = None) -> dict:
+            prediction_column: str | None = None, model: Path | None = None) -> dict:
     test, train, sample_submission, output = map(Path, (test, train, sample_submission, output))
     cache = Path(cache) if cache else output.parent / 'artifacts' / 'library.sqlite'
     candidates = Path(candidates) if candidates else None
+    model = Path(model) if model is not None else None
+    ranker = None
+    if model is not None:
+        from .learning import FingerprintRanker
+        ranker = FingerprintRanker(model)
     sidecar = output.with_suffix(output.suffix+'.report.json')
     config, columns = config or Config(), columns or {}
     test_paths = {p.resolve() for p in data_files(test)}
@@ -229,11 +265,11 @@ def predict(test: Path, train: Path, sample_submission: Path, output: Path, *,
     if test_paths.intersection(train_paths | candidate_paths):
         raise ValueError('Reference/candidate files overlap test files; refusing potential label leakage')
     source_paths = test_paths | train_paths | candidate_paths | {sample_submission.resolve()}
+    if model is not None:
+        source_paths.add(model.resolve())
     products = [output.resolve(), sidecar.resolve(), cache.resolve()]
     if len(set(products)) != len(products) or source_paths.intersection(products):
         raise ValueError('Output/cache would overwrite an input or another output')
-    # Do not write products inside an input directory, where a later run would
-    # ingest its own output and contaminate the input manifest.
     for source in (test, train, candidates):
         if source and source.is_dir() and any(source.resolve() in p.parents for p in products):
             raise ValueError('Output/cache inside an input directory would overwrite/contaminate data')
@@ -246,19 +282,24 @@ def predict(test: Path, train: Path, sample_submission: Path, output: Path, *,
         extra = sorted(set(groups)-set(expected))[:10]
         raise ValueError(f'Test and submission IDs differ: missing={missing}, extra={extra}. '
                          'Set the compound_id mapping from the official grouping schema; do not group by mass.')
-    db, identity, reused = _prepare_library(train, cache, columns, candidates)
+    db, identity, reused = _prepare_library(train, cache, columns, candidates, config)
     predictions, details = {}, {}
     try:
         for compound_id in expected:
-            predictions[compound_id], details[compound_id] = _rank(db, groups[compound_id], config)
+            predictions[compound_id], details[compound_id] = _rank(db, groups[compound_id], config, ranker)
         reference_count = int(db.execute('SELECT value FROM meta WHERE key="spectra"').fetchone()[0])
         structure_count = db.execute('SELECT COUNT(*) FROM molecules').fetchone()[0]
+        curation = json.loads(db.execute('SELECT value FROM meta WHERE key="curation"').fetchone()[0])
     finally:
         db.close()
     report = {
         'status': 'predictions_generated_not_competition_validated', 'version': __version__,
-        'official_score': None, 'official_metric_verified': False,
-        'official_schema_verified': False, 'uses_test_labels': False,
+        'official_score': None, 'official_metric_verified': True,
+        'metric_contract': 'MRR@25/tautomer-InChIKey14',
+        'metric_rdkit_matches': rdBase.rdkitVersion == '2026.03.3',
+        'training_curation': curation,
+        'official_schema_verified': header == ['molecule_id', 'smiles'], 'uses_test_labels': False,
+        'fingerprint_model': digest(model) if model is not None else None,
         'config': asdict(config), 'columns': columns, 'cache_reused': reused,
         'inputs': {'train': identity['train'], 'test': digest(test), 'template': digest(sample_submission),
                    'candidates': identity['candidates']},
@@ -276,10 +317,9 @@ def predict(test: Path, train: Path, sample_submission: Path, output: Path, *,
     buffer = io.StringIO(newline='')
     writer = csv.DictWriter(buffer, fieldnames=header, lineterminator='\n')
     writer.writeheader()
-    writer.writerows({key: k, pred: canonical(predictions[k])} for k in expected)
+    writer.writerows({key: k, pred: predictions[k]} for k in expected)
     text = buffer.getvalue()
     report['submission_sha256'] = hashlib.sha256(text.encode()).hexdigest()
-    # Write CSV last; a failed prediction never produces a partial submission.
     atomic_text(sidecar, json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False)+'\n')
     atomic_text(output, text)
     return report
@@ -289,4 +329,11 @@ def structure_fold(smiles: str, folds: int = 5) -> int:
     """Group splitting helper: every spectrum of the same 2D graph stays together."""
     if folds < 2:
         raise ValueError('At least two folds required')
-    return int.from_bytes(hashlib.sha256(canonical(smiles).encode()).digest()[:8], 'big') % folds
+    return int.from_bytes(hashlib.sha256(_valid_structure_key(smiles).encode()).digest()[:8], 'big') % folds
+
+
+def _valid_structure_key(smiles: str) -> str:
+    key = structure_key(smiles)
+    if key is None:
+        raise ValueError('Invalid structure for molecule-level split')
+    return key
