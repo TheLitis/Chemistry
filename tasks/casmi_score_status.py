@@ -72,7 +72,9 @@ def main():
     history,_=run('history',['competitions','submissions',pub.SLUG,'-v'])
     rows=pub.parse_history(history);row=verified_submission(rows,journal,a.ref)
     journal['submission_ref']=a.ref;pub.write_json(root/'publish-journal.json',journal)
-    single,rc=run('single-submission',['competitions','submission',str(a.ref)],check=False)
+    # Installed CLI 2.2.4 exposes scores via submissions, not the newer singular command.
+    limits_text,limits_rc=run('live-limits',['competitions','submission-limits',pub.SLUG,'--json'],check=False)
+    live_limits=json.loads(limits_text) if limits_rc==0 else None
     rank_text,rank_rc=run('rank',['competitions','list','--group','entered','--search','CASMI','--format','json'],check=False)
     rank=None;teams=None
     if rank_rc==0:
@@ -89,7 +91,7 @@ def main():
                   submission_created_this_run=False,total_account_submissions=len(rows),
                   budget=pub.budget_status(rows,dt.datetime.now(dt.timezone.utc),5),
                   public_rank=rank,competition_teams=teams,history_entry=row,
-                  single_submission_command_exit_code=rc,single_submission_response=single.strip(),
+                  live_limits_command_exit_code=limits_rc,live_submission_limits=live_limits,
                   tests_exit_code=tests.returncode,tests=tests.stdout.strip())
     pub.write_json(root/'official-score.json',result);pub.write_json(out/'official-score.json',result)
     print('OFFICIAL_SCORE_BEGIN\n'+json.dumps(result,indent=2)+'\nOFFICIAL_SCORE_END',flush=True)
