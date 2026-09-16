@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-v3-acceptance-20260916-01",
+  "id": "casmi-r06-architecture-prepare-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_v3_acceptance.py",
+  "script": "tasks/casmi_architecture_prepare.py",
   "arguments": [],
-  "requireCuda": false
+  "requireCuda": true
 }
