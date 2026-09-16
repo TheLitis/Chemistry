@@ -5,6 +5,7 @@ $RunnerName = 'ChemistryPC'
 $RunnerRoot = 'C:\actions-runner\ChemistryPC'
 $StateRoot = Join-Path $env:ProgramData 'ChemistryRunner'
 $MachineConfig = Join-Path $StateRoot 'machine.json'
+$SystemSid = 'S-1-5-18'
 
 function Invoke-GhJson {
     param([string[]]$Arguments)
@@ -36,10 +37,32 @@ if ($service) {
     Write-Host "Name: $($service.Name)"
     Write-Host "State: $($service.State)"
     Write-Host "Start mode: $($service.StartMode)"
+    Write-Host "Service account: $($service.StartName)"
+    Write-Host "Required privilege SID: $SystemSid"
     if ($service.State -ne 'Running') { $ok = $false }
+    if ($service.StartName -notin @('LocalSystem', 'NT AUTHORITY\SYSTEM')) {
+        Write-Host 'Permanent SYSTEM mode: NOT ENABLED' -ForegroundColor Red
+        $ok = $false
+    } else {
+        Write-Host 'Permanent SYSTEM mode: ENABLED' -ForegroundColor Green
+    }
 } else {
     Write-Host 'Service: NOT FOUND' -ForegroundColor Red
     $ok = $false
+}
+
+if (Test-Path -LiteralPath $MachineConfig) {
+    try {
+        $machine = Get-Content -LiteralPath $MachineConfig -Raw | ConvertFrom-Json
+        Write-Host "Configured privilege mode: $($machine.privilegeMode)"
+        Write-Host "Configured privilege SID: $($machine.privilegeSid)"
+        if ($machine.privilegeMode -ne 'SYSTEM' -or $machine.privilegeSid -ne $SystemSid) {
+            $ok = $false
+        }
+    } catch {
+        Write-Host "Machine config read failed: $($_.Exception.Message)" -ForegroundColor Red
+        $ok = $false
+    }
 }
 
 Write-Host "`n=== GitHub registration ==="
@@ -68,7 +91,7 @@ if (Get-Command gh -ErrorAction SilentlyContinue) {
 }
 
 if ($ok) {
-    Write-Host "`nChemistryPC health: OK" -ForegroundColor Green
+    Write-Host "`nChemistryPC health: OK (permanent SYSTEM mode)" -ForegroundColor Green
     exit 0
 }
 
