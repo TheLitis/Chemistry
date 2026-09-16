@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-verified-delivery-20260916-01",
+  "id": "casmi-kaggle-verify-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_delivery_status.py",
+  "script": "tasks/casmi_kaggle_verify.py",
   "arguments": [],
   "requireCuda": false
 }
