@@ -1,0 +1,114 @@
+{
+  "evidence_type": "real_PC_training_plus_independently_recomputed_audit",
+  "experiment": "R06",
+  "scope": "11 compact residual architecture families on a fixed pretrained V3 anchor; not an exhaustive search or de novo benchmark",
+  "identity": "NT AUTHORITY\\SYSTEM",
+  "screen": {
+    "run_id": 35076217188,
+    "artifact_id": 10438871433,
+    "architectures": 11,
+    "configurations_completed": 13,
+    "failed": 0,
+    "training_molecules": 32768,
+    "epochs": 6,
+    "screen_molecules": 512,
+    "mrr_at_25": {
+      "lowrank_linear": 0.6517605899476152,
+      "shallow_mlp": 0.6554289519798258,
+      "residual_mlp": 0.6472972898349609,
+      "dual_branch": 0.6494539623187969,
+      "adduct_moe": 0.6532051930706195,
+      "mass_conv": 0.6550347555665575,
+      "deep_sets": 0.6515748928907271,
+      "peak_transformer": 0.6461907845243691,
+      "latent_attention": 0.651046953514647,
+      "peak_graph": 0.6509783007562613,
+      "massset_hybrid": 0.6516955705608973,
+      "massset_hybrid+rank": 0.7031940860417023,
+      "massset_hybrid+unweighted": 0.5838715168221414
+    }
+  },
+  "refinement": {
+    "run_id": 35086289470,
+    "artifact_id": 10443295738,
+    "research_status": "completed",
+    "workflow_status": "failed_during_final_git_source_archiving_after_research_results_were_saved",
+    "training_molecules": 131072,
+    "finalists": ["massset_hybrid+rank", "shallow_mlp"],
+    "epochs": 6,
+    "replicated_architecture": "massset_hybrid+rank",
+    "seeds": [26091606, 26091607],
+    "trials_total_including_screen": 17,
+    "new_training_trials_this_continuation": 4
+  },
+  "validation_protocol": {
+    "prior_heldout_keys_excluded": 14294,
+    "screen_molecules": 512,
+    "selection_molecules": 512,
+    "audit_molecules": 2048,
+    "training_audit_key_overlap": 0,
+    "calibration_grid_size": 180,
+    "selection_locked_before_audit": true,
+    "catalog_contains_known_true_structures": true,
+    "candidate_filter_uses_observed_not_true_mass": true,
+    "uncovered_queries_scored_as_zero": true
+  },
+  "selected": {
+    "component": "ensemble_two_seeds",
+    "models": ["full-massset_hybrid+rank.npz", "replica-full.npz"],
+    "pooling": "early",
+    "weights": [0.5, 0.25, 0.25],
+    "sigma_ppm": 2.0
+  },
+  "checkpoint_hashes": {
+    "full-massset_hybrid+rank.npz": "29cc3184291a911523881e201043670c44b8a2a8e68a133e86044a99d3487f19",
+    "replica-full.npz": "3c11a19ea943a63bd10b6f7088d0c1533e58b33fb15da139ac0dbf1c9c3c7093"
+  },
+  "audit": {
+    "1": {
+      "anchor": {"molecules": 2048, "mrr_at_25": 0.5585133470555544, "top1": 0.43408203125, "recall_at_25": 0.88916015625},
+      "selected": {"molecules": 2048, "mrr_at_25": 0.6117816656863688, "top1": 0.48486328125, "recall_at_25": 0.9169921875},
+      "paired": {"delta_mrr": 0.05326831863081439, "ci95": [0.04489737716806602, 0.06160788376595991], "bootstrap_repeats": 2000, "bootstrap_unit": "molecule"},
+      "candidate_coverage": 0.98974609375,
+      "top1_extra": 104
+    },
+    "3": {
+      "anchor": {"molecules": 2048, "mrr_at_25": 0.6384807816599487, "top1": 0.5048828125, "recall_at_25": 0.9443359375},
+      "selected": {"molecules": 2048, "mrr_at_25": 0.7062767142550213, "top1": 0.58447265625, "recall_at_25": 0.95849609375},
+      "paired": {"delta_mrr": 0.06779593259507247, "ci95": [0.05954442430052582, 0.07641556485321033], "bootstrap_repeats": 2000, "bootstrap_unit": "molecule"},
+      "candidate_coverage": 0.98974609375,
+      "top1_extra": 163
+    },
+    "all": {
+      "anchor": {"molecules": 2048, "mrr_at_25": 0.6719100639876698, "top1": 0.54931640625, "recall_at_25": 0.9462890625},
+      "selected": {"molecules": 2048, "mrr_at_25": 0.7310522185077135, "top1": 0.61376953125, "recall_at_25": 0.958984375},
+      "paired": {"delta_mrr": 0.05914215452004372, "ci95": [0.05117855558531194, 0.06763075219711917], "bootstrap_repeats": 2000, "bootstrap_unit": "molecule"},
+      "candidate_coverage": 0.97705078125,
+      "top1_extra": 132
+    }
+  },
+  "independent_verification": {
+    "raw_rank_rows": 6144,
+    "all_metrics_and_CI_recomputed": true,
+    "comparison_tolerance": 1e-12,
+    "method": "molecule-paired bootstrap, 2000 draws, seed 26091603",
+    "audit_key_order_sha256": "2ffb03164a4fe8971a49979bfcb8ff994a05d0c43b4d0527c97f1b8801badb0f",
+    "raw_ranks_sha256": "264b559b88af7d13bf0e1fc468bc249246a63211f44d50854012cdcb8f148a56"
+  },
+  "limitations": [
+    "Finite compact residual architecture comparison on a common pretrained anchor, not all possible architectures.",
+    "Candidate catalog contains known structures; this is not a de novo generation benchmark.",
+    "Raw set branch retains top 32 peaks from up to three acquisitions; vector input compresses spectra.",
+    "Validation acceptance does not use the true mass; empty or uncovered candidate sets count as failures.",
+    "All-budget diagnostic uses all-spectrum vector means, at most three token acquisitions, and early pooling.",
+    "Bruker/NP source flags mean at least one available spectrum, not pure independent instrument cohorts.",
+    "Calibration grid is separate from the 2048-key audit; public Kaggle scores were not used for selection.",
+    "The total improvement includes architecture, loss, ensembling, and mass-prior selection; it is not an isolated architecture effect.",
+    "All-budget diagnostics use mean observed mass and may include duplicate rows; the research deployment uses median mass and deduplicated acquisitions.",
+    "Audited holdout checkpoints are exported unchanged; a full-corpus refit has not been performed.",
+    "Intervals describe audit sampling for the fixed trained models, not general uncertainty across training runs."
+  ],
+  "new_kaggle_submissions": 0,
+  "official_score_for_r06": null,
+  "champion_replaced": false
+}
