@@ -34,8 +34,11 @@ def main():
     from casmi26.production import write_json
     prep=load('prep',repo/'tasks/casmi_prepare.py');env=prep.kaggle_environment(state,dict(os.environ))
     root=state/'artifacts/casmi26/kaggle-r06-v1';journal_path=root/'publish-journal.json';journal=json.loads(journal_path.read_text())
-    if not journal.get('submission_v3_attempted') or journal.get('submission_v3_command_exit_code')!=0:
-        raise RuntimeError('No accepted-at-command-level v3 attempt to reconcile')
+    if not journal.get('submission_v3_attempted'):
+        raise RuntimeError('No journaled v3 write attempt to reconcile')
+    command_rc=journal.get('submission_v3_command_exit_code')
+    if command_rc is not None and command_rc!=0:
+        raise RuntimeError('The journal records a failed v3 submission command')
     attempted=utc(journal['submission_v3_attempted_utc'])
     out=Path(os.environ['CHEMISTRY_REQUEST_OUTPUT']);out.mkdir(parents=True,exist_ok=True)
     old=os.environ.get('KAGGLE_API_TOKEN');os.environ['KAGGLE_API_TOKEN']=env['KAGGLE_API_TOKEN']
@@ -68,7 +71,6 @@ def main():
     journal.update(submission_v3_ref=final['ref'],submission_v3_status=final['status'],submission_v3_public_score=final['public_score'],
                    submission_v3_error_description=final['error_description'],submission_v3_checked_utc=dt.datetime.now(dt.timezone.utc).isoformat())
     write_json(journal_path,journal)
-    # read-only quota snapshot, proving no second write happened here
     r=subprocess.run([str(py),'-c','from kaggle.cli import main;main()','competitions','submission-limits',SLUG,'--json'],
                      env=env,stdin=subprocess.DEVNULL,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=90)
     limits=json.loads(r.stdout) if r.returncode==0 else None
