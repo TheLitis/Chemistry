@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r06-kaggle-v3-status-20260916-02",
+  "id": "casmi-r07-inventory-20260917-01",
   "task": "script",
-  "script": "tasks/casmi_r06_v3_status.py",
+  "script": "tasks/casmi_r07_inventory.py",
   "arguments": [],
   "requireCuda": false
 }
