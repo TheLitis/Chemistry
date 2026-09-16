@@ -14,6 +14,8 @@ $DataRoot = Join-Path $StateRoot 'data'
 $CacheRoot = Join-Path $StateRoot 'cache'
 $MachineConfig = Join-Path $StateRoot 'machine.json'
 $RepoPath = Join-Path $env:USERPROFILE 'Chemistry'
+$EnableSystemScript = Join-Path $PSScriptRoot 'enable-system.ps1'
+$SystemSid = 'S-1-5-18'
 
 function Test-Administrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -52,19 +54,24 @@ function Write-MachineConfig {
         dataRoot = $DataRoot
         cacheRoot = $CacheRoot
         maxRamSmokeGiB = 8
+        desiredPrivilegeMode = 'SYSTEM'
+        desiredPrivilegeSid = $SystemSid
         installedAt = (Get-Date).ToUniversalTime().ToString('o')
     }
     $config | ConvertTo-Json -Depth 4 | Set-Content -Path $MachineConfig -Encoding UTF8
 
-    # NETWORK SERVICE (S-1-5-20) needs access to persistent runner state/data.
+    # NETWORK SERVICE is used only as the bootstrap account before enable-system.ps1 switches the service to LocalSystem.
     & icacls.exe $StateRoot /grant '*S-1-5-20:(OI)(CI)M' /T /C | Out-Null
     if ($LASTEXITCODE -ne 0) {
-        throw "Failed to grant NETWORK SERVICE access to $StateRoot"
+        throw "Failed to grant bootstrap NETWORK SERVICE access to $StateRoot"
     }
 }
 
 if (-not (Test-Administrator)) {
     throw 'Run this installer from PowerShell opened with Run as administrator.'
+}
+if (-not (Test-Path -LiteralPath $EnableSystemScript -PathType Leaf)) {
+    throw "SYSTEM migration script is missing: $EnableSystemScript"
 }
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
@@ -87,11 +94,10 @@ $configured = Test-Path (Join-Path $RunnerRoot '.runner')
 $service = Get-RunnerService
 
 if ($configured -and $service -and -not $Repair) {
-    Set-Service -Name $service.Name -StartupType Automatic
-    if ($service.State -ne 'Running') {
-        Start-Service -Name $service.Name
-    }
-    Write-Host "ChemistryPC is already configured. Service: $($service.Name)" -ForegroundColor Green
+    & $EnableSystemScript
+    $service = Get-RunnerService
+    Write-Host "ChemistryPC is already configured in permanent SYSTEM mode. Service: $($service.Name)" -ForegroundColor Green
+    Write-Host "Service account: $($service.StartName)"
     Write-Host "State: $StateRoot"
     Write-Host "Machine config: $MachineConfig"
     exit 0
@@ -159,6 +165,8 @@ if (-not $registrationToken) {
 Write-Host 'Registering ChemistryPC as a repository-scoped Windows service...'
 Push-Location $RunnerRoot
 try {
+    # The runner installer supports NETWORK SERVICE reliably. Immediately after registration,
+    # enable-system.ps1 changes the Windows service logon to LocalSystem (S-1-5-18).
     & .\config.cmd `
         --url $RepositoryUrl `
         --token $registrationToken `
@@ -184,9 +192,10 @@ if (-not $service) {
     throw 'Runner configuration completed but the Windows service was not found.'
 }
 
-Set-Service -Name $service.Name -StartupType Automatic
-if ($service.State -ne 'Running') {
-    Start-Service -Name $service.Name
+& $EnableSystemScript
+$service = Get-RunnerService
+if (-not $service -or $service.StartName -notin @('LocalSystem', 'NT AUTHORITY\SYSTEM')) {
+    throw 'Runner registration succeeded, but permanent SYSTEM mode was not established.'
 }
 
 $remoteRunner = $null
@@ -200,10 +209,12 @@ for ($i = 0; $i -lt 12; $i++) {
 }
 
 Write-Host ''
-Write-Host 'ChemistryPC installation complete.' -ForegroundColor Green
+Write-Host 'ChemistryPC installation complete in permanent SYSTEM mode.' -ForegroundColor Green
 Write-Host "Runner directory: $RunnerRoot"
 Write-Host "State/data directory: $StateRoot"
 Write-Host "Service: $($service.Name)"
+Write-Host "Service account: $($service.StartName)"
+Write-Host "Privilege SID: $SystemSid"
 if ($remoteRunner) {
     Write-Host "GitHub status: $($remoteRunner.status), busy=$($remoteRunner.busy)"
 } else {
