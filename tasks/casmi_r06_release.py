@@ -73,8 +73,8 @@ def main():
     write_json(dest/'runtime.json',runtime)
     archive=dest/'r06-research-candidate.zip'
     with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=3) as z:
-        for file in sorted(bundle.iterdir()):
-            if file.is_file():z.write(file,'bundle/'+file.name)
+        for name in sorted(set(manifest['files'])|{'r06-bundle.json'}):
+            z.write(bundle/name,'bundle/'+name)
         for name in ('predict_r06.py','README.txt','runtime.json'):z.write(dest/name,name)
         for file in sorted((repo/'work/casmi26/casmi26').glob('*.py')):z.write(file,file.relative_to(repo).as_posix())
     result={'status':'completed','checked_utc':dt.datetime.now(dt.timezone.utc).isoformat(),'commit':os.environ.get('GITHUB_SHA'),
@@ -84,8 +84,24 @@ def main():
         'original_champion_unchanged':True,'new_submissions':0,'new_uploads':0,'new_training':False,
         'official_score':None,'candidate_not_champion':True,'weights_kind':manifest['weights_kind'],
         'tests':tests.stdout.strip(),'runtime':runtime}
+    spec=importlib.util.spec_from_file_location('source_archive',repo/'tasks/source_archive.py')
+    exporter=importlib.util.module_from_spec(spec);spec.loader.exec_module(exporter)
+    result['source_archive']=exporter.archive_source(repo,out/'source.zip')
+    result['reconciles_archive_failure']={'research_run':35086289470,'release_run':35087391690,
+        'reason':'Repository still owned by the former NETWORK SERVICE after user switched service to SYSTEM',
+        'solution':'Exact checkout trusted for this archive command only; no global Git, ACL or service changes'}
+    spec=importlib.util.spec_from_file_location('prepare',repo/'tasks/casmi_prepare.py')
+    prep=importlib.util.module_from_spec(spec);spec.loader.exec_module(prep)
+    env=prep.kaggle_environment(state,dict(os.environ));result['kaggle_reads']={}
+    for label,args in [('history',['competitions','submissions',prep.SLUG,'--format','json']),
+                       ('limits',['competitions','submission-limits',prep.SLUG,'--json'])]:
+        read=subprocess.run([str(python),'-c','from kaggle.cli import main;main()']+args,env=env,
+            stdin=subprocess.DEVNULL,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=90)
+        record={'exit_code':read.returncode}
+        if read.returncode==0:record['data']=json.loads(read.stdout)
+        else:record['error']=prep.redact(read.stderr,env)[:1000]
+        result['kaggle_reads'][label]=record
     write_json(dest/'release.json',result);write_json(out/'release.json',result)
-    subprocess.run(['git','-C',str(repo),'archive','--format=zip','--output='+str(out/'source.zip'),'HEAD'],check=True,timeout=60)
     print('R06_RELEASE_BEGIN\n'+json.dumps(result,indent=2)+'\nR06_RELEASE_END',flush=True)
     return 0
 
