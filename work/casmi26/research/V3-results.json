@@ -1,0 +1,55 @@
+{
+  "evidence_type": "completed_ChemistryPC_training_and_verification",
+  "verification_run_id": 35060034698,
+  "verification_artifact_id": 10433075673,
+  "training_commit": "8fe097d6b47f5ea2874d8a4ea079836fa60669e0",
+  "feature_version": "fractional-mass-v3.1",
+  "feature_dim": 8200,
+  "target_heads": {"morgan_radius_2": 2048, "morgan_radius_3": 4096, "atom_pair": 8192},
+  "selected_variant": "multitarget_balanced",
+  "selected_weights": [0.5, 0.25, 0.25],
+  "selection_uses_only_calibration": true,
+  "calibration_molecules": 800,
+  "audit_molecules": 1600,
+  "previous_keys_excluded": 11894,
+  "training_query_overlap": 0,
+  "holdout_training_rows": 248523,
+  "audit": {
+    "v1_frozen": {"mrr_at_25": 0.6497576962493897, "top1": 0.51125, "recall_at_25": 0.958125},
+    "v1_finetune": {"mrr_at_25": 0.6576373712579783, "top1": 0.523125, "recall_at_25": 0.96125},
+    "highres_morgan": {"mrr_at_25": 0.666581464766594, "top1": 0.53625, "recall_at_25": 0.961875},
+    "multitarget_morgan": {"mrr_at_25": 0.6736809396776059, "top1": 0.54625, "recall_at_25": 0.963125},
+    "multitarget_balanced": {"mrr_at_25": 0.6802474876414882, "top1": 0.553125, "recall_at_25": 0.969375}
+  },
+  "paired_selected_vs_frozen": {
+    "delta_mrr": 0.03048979139209865,
+    "ci95": [0.021002142528458743, 0.04018395328657311],
+    "bootstrap_repeats": 2000,
+    "bootstrap_unit": "molecule"
+  },
+  "full_refit": {
+    "training_rows": 276241,
+    "epochs": 10,
+    "hidden": 512,
+    "batch_size": 256,
+    "learning_rate": 0.0005,
+    "seed": 26091605,
+    "device": "cuda",
+    "amp": true,
+    "parameters": 11553280,
+    "export_max_absolute_error": 0.000011444091796875
+  },
+  "full_model_sha256": "1b22b99a04b2f30e81fcb55fe50077f6f6b0a29674e91521e1f70db3dbac82bb",
+  "selected_holdout_model_sha256": "83f6c57f12bcc183f2efe89177830fe0bcd79f4e77b2c61179771f6ae825fbe2",
+  "true_structure_present_in_catalog": true,
+  "routing_revalidated_by_this_experiment": false,
+  "official_score_for_v3": null,
+  "candidate_not_champion": true,
+  "limitations": [
+    "Known-structure-inclusive catalog; not de novo or hidden-test accuracy.",
+    "All-spectra aggregated train holdouts; instrument transfer requires separate evidence.",
+    "Full-data refit is separate from the leakage-controlled holdout experiment.",
+    "The R03 confidence thresholds 0.95/0.05 were preserved, not revalidated by this neural-only comparison.",
+    "The audit was not used to replace the calibration-selected weights."
+  ]
+}

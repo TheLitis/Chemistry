@@ -1,0 +1,48 @@
+{
+  "evidence_type": "completed_ChemistryPC_fixed_model_diagnostic",
+  "workflow_run_id": 35063659619,
+  "artifact_id": 10433890330,
+  "commit": "8acde1b805efb23da0fb51ccec023bb1d949a29c",
+  "selected_variant_fixed": "multitarget_balanced",
+  "molecules": 1600,
+  "spectra": 14403,
+  "unique_spectra": 14389,
+  "all_sources": {
+    "one": {"frozen_mrr": 0.5228460010305676, "v3_mrr": 0.5504800020709985, "frozen_top1": 0.384375, "v3_top1": 0.415625, "v3_recall25": 0.905625},
+    "at_most_three": {"average_spectra": 2.82, "frozen_mrr": 0.6178260489916009, "v3_mrr": 0.6446302818667513, "frozen_top1": 0.485, "v3_top1": 0.520625, "v3_recall25": 0.94625},
+    "all": {"average_spectra": 9.001875, "frozen_mrr": 0.6500119462127151, "v3_mrr": 0.6794392537797619, "frozen_top1": 0.511875, "v3_top1": 0.55125, "v3_recall25": 0.969375}
+  },
+  "bruker_only": {
+    "molecules": 30,
+    "spectra": 61,
+    "one": {"frozen_mrr": 0.591111111111111, "v3_mrr": 0.6303703703703702},
+    "at_most_three": {"frozen_mrr": 0.5852777777777777, "v3_mrr": 0.6100925925925925},
+    "all": {"frozen_mrr": 0.5869444444444445, "v3_mrr": 0.6100925925925925}
+  },
+  "descriptive_bootstrap": {
+    "raw_ranks_sha256": "e2c0bcb139fa5f2c18e74ffb7a7f3a4fe9a77520bee3c5a038c229ff2734cd51",
+    "seed": 26091607,
+    "repeats": 5000,
+    "all_sources_delta_ci95": {
+      "one": [0.018515004415064457, 0.03651899875200724],
+      "at_most_three": [0.01707622149451683, 0.036445141987964925],
+      "all": [0.01999622089522301, 0.03855751678904519]
+    },
+    "bruker_all_delta_ci95": [-0.05333333333333333, 0.09834259259259247],
+    "bootstrap_unit": "molecule",
+    "multiple_comparison_adjustment": false,
+    "used_to_select_model": false
+  },
+  "test_data_read": false,
+  "new_training": false,
+  "new_submissions": 0,
+  "model_selection_changed": false,
+  "source_tests_passed": 161,
+  "limitations": [
+    "Reuses spent audit keys diagnostically, not as an untouched model-selection benchmark.",
+    "The correct structure is in the catalog; not de novo or catalog coverage.",
+    "The literal Bruker cohort is small, and its paired interval includes zero.",
+    "All-spectrum diagnostic masses use a median, unlike the original audit cache's mean; the scores are not interchangeable.",
+    "Reduced budgets select distinct spectra by fixed hashes independent of labels and input order."
+  ]
+}
