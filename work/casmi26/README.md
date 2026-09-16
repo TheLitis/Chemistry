@@ -1,139 +1,174 @@
-# CASMI26: all spectra -> one molecular structure -> submission
+# CASMI26 — trained inference from all MS/MS spectra
 
-**Acceptance target:** exact 2D structures for every unknown compound and the
-highest possible official competition score. Retrieval accuracy, fingerprints,
-a running script and passing unit tests do not establish that target.
+The goal remains exact rank-one molecular connectivity for every unknown
+compound, scored by the competition's MRR@25. A runnable file, an embedding,
+a matching molecular formula, and a valid CSV are not evidence of that goal.
 
-**Current status: executable research prototype, NOT a completed high-score
-solution.** There are no trained generative weights, real CASMI26 validation
-results or Kaggle scores in this repository. The official metric, exact schema
-and execution/external-data rules could not be retrieved in the implementation
-session. The code therefore does not claim official compatibility or 100%.
+## Current implementation
 
-## Run
+The production model is trained on the supplied official training corpus.
+Full-corpus preprocessing inspected 2,539,608 spectra and admitted 2,487,355;
+24 rows had unsupported/invalid ion or peak information, and 52,229 did not
+pass the precursor/structure mass-consistency check. The raw structure catalog
+contains 277,566 normalized SMILES records, of which 276,241 have admitted
+spectral features. Raw records are not the same as unique tautomer-equivalent
+connectivity keys.
 
-From `C:\Users\loval\Chemistry` (Python 3.13 with the dependencies installed):
+The 3,152,384-parameter fingerprint model uses 2,048 fragment-mass bins, 2,048
+neutral-loss bins and eight precursor/polarity/energy features. It was trained
+on ChemistryPC's CUDA device for 30 epochs. A distinct holdout model is retained
+for evaluation; the final inference model was refitted on all admitted records.
+Inference combines per-spectrum spectral matching and learned structural
+fingerprint ranking. All available spectra of a molecule contribute.
 
-```powershell
-python predict.py --test data/test --output submission.csv
+## Measured validation, not a Kaggle score
+
+A fixed 10% connectivity-key holdout excludes all spectra of held-out keys from
+fitting. Up to 4,000 distinct held-out keys are evaluated. The candidate catalog
+**includes their known molecular structures by design**. This measures
+known-catalog retrieval, not de novo discovery or the hidden Kaggle test.
+
+| Measure, 4,000 held-out molecules | Mass-error baseline | Learned fingerprint ranker |
+|---|---:|---:|
+| MRR@25 | 0.2470373 | 0.5668168 |
+| Top-1 exact connectivity | 0.13875 | 0.42875 |
+| Recall@25 | 0.68875 | 0.91800 |
+
+Among 3,922 cases with multiple mass-compatible catalog records, MRR@25 was
+0.2323174 for mass ranking and 0.5584567 for the learned model. The final
+spectral-plus-neural blend is not the model used in this comparison; its
+hidden-test performance has not been measured. No official Kaggle score is
+claimed. Evidence is linked in `evidence/2026-09-16-official-training.json`.
+
+## Paths on ChemistryPC
+
+```text
+C:\ProgramData\ChemistryRunner\data\external\enveda-CASMI26-molecule-id-mass-spectra
+C:\ProgramData\ChemistryRunner\cache\casmi26\official-v1
+C:\ProgramData\ChemistryRunner\artifacts\casmi26\official-v1
 ```
 
-One-time isolated environment, with Python 3.13 available:
+The GitHub Actions workspace is separate from the user's synchronized checkout;
+large data and models stay outside that disposable workspace. The isolated
+Python executable is `C:\ProgramData\ChemistryRunner\envs\casmi26\python.exe`.
+
+Production inference can be invoked from either checked-out repository copy:
 
 ```powershell
-py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r work/casmi26/requirements.txt
-.\.venv\Scripts\python.exe predict.py --test data/test --output submission.csv
+& 'C:\ProgramData\ChemistryRunner\envs\casmi26\python.exe' predict.py --production --test 'C:\ProgramData\ChemistryRunner\data\external\enveda-CASMI26-molecule-id-mass-spectra\test.parquet' --output submission.csv
 ```
 
-The command automatically locates `train` and `sample_submission.csv` alongside
-the test data. Explicit paths are also accepted:
+The production mode discovers the adjacent training file and the default
+ProgramData model bundle. Other inputs and models can be specified:
 
 ```powershell
-python predict.py --test data/test.parquet --train data/train.parquet --sample-submission data/sample_submission.csv --output submission.csv
+python predict.py --production --test data/test.parquet --train data/train.parquet --bundle artifacts/bundle --output submission.csv
 ```
 
-The required reference spectra and template are **not bundled**. No account
-credentials are requested or read by this program; it runs offline. It does not
-download competition data, accept rules, upload predictions or launch services.
-The existing PC bridge delivers files only and is not changed into a remote shell.
+`--bundle` also selects production mode. Without either `--production` or
+`--bundle`, the original experimental CLI remains available for compatibility;
+that old mode does not automatically use the trained production model.
 
-## Input contract: provisional, to map to the actual competition files
+## Actual competition contract
 
-Files or directories containing Parquet, JSONL, CSV, TSV or MGF are accepted.
-Required canonical fields are:
+See `COMPETITION.md` and `casmi26/metric.py`. Use RDKit **2026.03.3**. Each
+molecule has one ranked list of 1–25 SMILES, separated by semicolons, in the
+`molecule_id,smiles` CSV. Matching canonicalizes tautomers and compares the
+first 14 InChIKey characters. Multiple representations of one connectivity
+must not waste candidate ranks.
 
-| Field | Meaning |
-|---|---|
-| `compound_id` | Explicit compound-level identifier; all its spectra are used together |
-| `precursor_mz` | Observed ion mass-to-charge ratio, not neutral molecular mass |
-| `adduct` | An explicitly supported ion convention such as `[M+H]+` or `[M-H]-` |
-| `mz`, `intensity` | Equal-length peak arrays; alternatively `peaks: [[mz, intensity], ...]` |
-| `smiles` | Required in reference data only; ignored in test |
+CASMI26 is a **code competition**. Kaggle reruns a notebook without Internet
+and replaces the visible example test file with a hidden test file. The
+visible file comes from training examples: success on it is not a hidden
+accuracy estimate. A previously saved CSV alone is not a valid submission
+workflow. The notebook must compute predictions from the current input mount.
 
-CSV/TSV arrays must be JSON-encoded. MGF needs a compound-level metadata field
-(e.g. `COMPOUND_ID`), `PEPMASS` and `ADDUCT`/`ION_TYPE`. A numeric `CHARGE` by
-itself does not identify the adduct. Spectrum IDs must not be substituted for
-compound IDs without checking the official grouping. No compounds are merged
-merely because their precursor masses coincide.
+## Production modules
 
-For other column names, provide a JSON mapping with `--columns mapping.json`:
+`production.py` streams the full official corpus, parses stoichiometric adducts,
+constructs feature and fingerprint arrays, trains the holdout and full-refit
+models, and records provenance. `learning.py` contains the neural model and
+numeric-only checkpoint format. `portable.py` consumes train-derived assets,
+selects fresh reference spectra for the current queries, and writes predictions
+and a diagnostic report. `submission_notebook.py` embeds inspectable source,
+loads the current Kaggle test mount and uses offline wheels.
 
-```json
-{"compound_id": "actual_compound_key", "precursor_mz": "actual_precursor_column"}
-```
+The notebook asset bundle contains only `catalog.json`, `fingerprints.npy`,
+`model.npz`, their manifest, and dependency wheels. It does not contain visible
+test identifiers, test answers, precomputed test predictions, or the
+query-specific reference cache. Training-data hashes and model hashes are
+checked. An old visible sample template cannot override replacement test IDs.
 
-This is an example mapping, not a claim about CASMI26 field names. Unsupported
-schemas stop with an error; they are not silently guessed.
+## Reproduce the PC stages
 
-The current writer supports an actual two-column ID/SMILES template. It
-preserves the header, row order and leading zeroes in IDs, ignores all template
-prediction values, and requires exactly the same compound ID set in test.
-Use `--id-column` and `--prediction-column` for explicitly verified names.
-A rank-list, spectrum-level or multi-column official submission contract needs
-an adapter before this version may be submitted. No fake official scorer is
-included. `exact_match` is only a local canonical-graph diagnostic: stereochemistry
-is removed, isotopes retained, and tautomer/charge normalization is not assumed.
+`control/request.json` selects a committed reviewed script for ChemistryPC.
+Use `tasks/casmi_official.py --stage prepare`, then `--stage fit --epochs 30`.
+`tasks/casmi_deliver.py` builds a train-only bundle, executes all generated
+notebook code cells against the actual visible files, validates every output
+row, packages Linux CPython 3.12/3.13 wheels and rechecks existing CLI access.
+This Windows code-cell run is distinct from a Jupyter-kernel execution and from
+an actual Kaggle Linux run; the reports state exactly which was performed.
 
-## What the current inference actually does
+The verified delivery includes `submission.csv` for all 400 visible example
+molecules and all 1,213 spectra, a source-embedded notebook, trained model assets,
+and a 243,412,845-byte ZIP. No mass-incompatible fallback was needed for these
+visible examples. The delivery job ran 88 passing tests. These are software and
+output-conformance checks, not proof that 400 structures are correct.
 
-It streams reference spectra into an on-disk SQLite exact-mass index, preserving
-peak precision. For each compound it checks agreement of neutral masses across
-all its spectra, retrieves mass-compatible structural candidates, and averages
-the best mode-compatible reference match for **each query spectrum**. Matching
-uses square-root-intensity one-to-one cosine and neutral losses. It selects one
-canonical 2D structure, not a final top-10 list.
+Attach the `bundle` directory as a **private** Kaggle dataset. Keep assets
+private to the team and respect competition redistribution terms. Attach the
+original competition separately to the notebook. Disable Internet. Do not upload
+a saved visible CSV as a substitute for a notebook that processes hidden input.
 
-An optional permitted local structure catalog can be supplied with
-`--candidates data/catalog.csv`. The program does not check a catalog's license
-or competition eligibility; those must be verified before use.
+## Kaggle access under the service
 
-`--isomer-budget 64` adds a bounded set of valid formula-preserving graph
-rewirings, including structures absent from the reference library. It also
-activates a bond-cut fragment-explanation heuristic. This is NOT exhaustive de
-novo generation and NOT a learned or chemically complete forward MS/MS model.
-It is off by default because its effect on real accuracy has not been measured.
-Without a correct library candidate or a suitable generated proposal, this
-version cannot select the correct structure. If there is no mass-compatible
-seed/candidate at all, it exits rather than writing arbitrary carbon or a
-chemically incompatible fallback. Missing references for an ion mode yield
-zero evidence and are explicitly recorded; margins are not probabilities.
+Installing/authenticating the CLI under the Windows user does not provision a
+token to NETWORK SERVICE automatically. The final delivery check still had no
+authorized file listing from the service. Local inference is independent of
+Kaggle authentication and is complete; an official notebook submission is not.
 
-## Output and reproducibility
+`runner/stage-kaggle-access.ps1` is a user-invoked helper, not an automatically
+executed runner task. Run it under your signed-in Windows account (elevate if
+needed). It reads only an existing `KAGGLE_API_TOKEN` or the provider's standard
+`access_token` file; otherwise it asks for hidden console input. It stages that
+one token into `C:\ProgramData\ChemistryRunner\kaggle\access_token`, protects
+that dedicated directory, and grants NETWORK SERVICE read access. It does not
+print the secret, read browser sessions, open your profile, change the runner
+identity, accept competition rules, or submit anything. Do not send tokens in
+chat. The credential operation itself cannot be tested without your user-side
+authorization; syntax is checked separately.
 
-`submission.csv` contains the chosen structure per compound. Its companion
-`submission.csv.report.json` records SHA-256 input/output fingerprints, settings,
-software versions, index reuse, numbers of spectra actually used, structural
-candidates and uncalibrated diagnostic scores. `official_score` is always `null`
-until an external scoring result is actually obtained. The top-10 diagnostic
-list in that report is not the submission or the acceptance target.
+## Limitations that remain material
 
-A failed prediction does not create a partial CSV or overwrite source data.
-Existing output from a previous successful run is preserved if a new run fails;
-check the process exit code and the output hash, not just file existence.
-Reference data is streamed; only test spectra and a mass-compatible candidate
-set are kept in memory. The first index build can require substantial disk/time;
-this has not been benchmarked on the full competition library. SQLite caches are
-reused only when source-content hashes, schema mapping and RDKit version match.
-All data, environments, credentials and generated outputs are git-ignored so
-that they do not pause the existing file bridge.
+This is a trained catalog-retrieval baseline. It does **not** yet include a
+competitive pretrained de novo molecular decoder or an external natural-product
+structure catalog. If the correct graph is absent from the catalog, this
+version cannot select it. Such absence is expected for some hidden novelty
+classes described by the organizer.
 
-## Verification
+When no mass-compatible candidate exists, production inference returns an
+explicitly flagged nearest-mass learned ranking rather than dropping the
+molecule and invalidating the entire submission. Those last-resort guesses are
+not mass-compatible recovery and are not reported as success. They appear in
+`mass_incompatible_fallbacks` in the report. The old experimental pipeline's
+stricter behavior (stop instead) is unchanged.
+
+Model scores and margins are not calibrated correctness probabilities. All
+usable query spectra are averaged, but the validation's number and domain of
+spectra per molecule can differ from the hidden natural-product test.
+Instrument/domain shift, incomplete catalog coverage and ranker accuracy still
+need measured improvement. Passing tests or generating 400 valid rows does not
+establish 100% recovery. Official scoring remains null until Kaggle returns an
+actual scored submission result.
+
+## Software verification
 
 ```powershell
-python -m pip install pytest
 python -m pytest -q work/casmi26/tests
 ```
 
-Tests cover exact graph identity, isotope preservation, supported adducts,
-input adapters, peak matching, joint-spectrum decisions, leading-zero IDs,
-label non-interference, new graph proposals, cache invalidation and safe
-failures. The Parquet test is skipped when PyArrow is absent. The GitHub workflow
-installs PyArrow and runs the suite on hosted Linux and Windows, not on the PC.
-
-Before treating this as a competitive solution, obtain the actual rules/metric
-and data through authorized access, adapt the verified schema, run molecule-level
-holdouts, and measure exact structure accuracy and the official score. For a de
-novo holdout, remove held-out graphs from both spectral references and the
-candidate catalog. Do not report synthetic fixture success as molecular
-identification performance. See `DESIGN.md` for the objective and evidence gaps.
+The suite checks parsing, mass/adduct handling, graph equivalence, train/test
+isolation, array shapes, one-to-one matching, fresh hidden IDs, input protection,
+bundle integrity and notebook generation. The completed trained-notebook
+delivery run had 88 passing tests on ChemistryPC. Do not mistake these counts
+for molecular accuracy.
