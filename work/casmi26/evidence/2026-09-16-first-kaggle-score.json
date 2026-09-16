@@ -1,0 +1,70 @@
+{
+  "evidence_type": "verified_Kaggle_API_result_from_completed_ChemistryPC_jobs",
+  "competition": "enveda-CASMI26-molecule-id-mass-spectra",
+  "account": "thelindortis",
+  "submission": {
+    "ref": 56268669,
+    "status": "COMPLETE",
+    "public_score": 0.147,
+    "metric": "MRR@25",
+    "private_score": null,
+    "created_utc": "2026-09-16T03:49:28.787000Z",
+    "checked_utc": "2026-09-16T03:59:45.121260Z",
+    "description": "CASMI26 baseline v1 - trained catalog + spectral matching; first official evaluation",
+    "kernel": "thelindortis/casmi26-trained-baseline-v1",
+    "kernel_version": 1,
+    "kernel_url": "https://www.kaggle.com/code/thelindortis/casmi26-trained-baseline-v1",
+    "kernel_private": true,
+    "dataset": "thelindortis/casmi26-assets-v1",
+    "dataset_private_verified": true,
+    "public_rank_at_check": 122,
+    "competition_team_count_at_check": 162
+  },
+  "quota_from_live_submission_limits_endpoint": {
+    "numToday": 1,
+    "numTotal": 1,
+    "numAllowedNow": 4,
+    "official_daily_limit_verified_in_rules": 5,
+    "internal_rolling_24h_cap": 2,
+    "pending_at_final_check": 0,
+    "new_submissions_made_in_this_work_session": 1,
+    "final_submissions_selected": false
+  },
+  "execution_evidence": {
+    "submit_run_id": 35053211614,
+    "submit_job_id": 104657851584,
+    "first_complete_status_run_id": 35053749103,
+    "first_complete_status_job_id": 104659448157,
+    "final_score_run_id": 35053859409,
+    "final_score_job_id": 104659789442,
+    "final_score_artifact_id": 10430420242,
+    "final_score_commit": "8db786e72539cc4f22dcb09d6ae6b419f7dd3f45",
+    "final_run_conclusion": "success",
+    "tests_passed": 119,
+    "tests_failed": 0,
+    "test_seconds": 5.07
+  },
+  "reproducibility": {
+    "model_sha256": "4d79a6d4f24060cd0f7c09bebefbced2c9e1672cb1cdf5f7831cd5a19c03b55d",
+    "uploaded_notebook_sha256": "3dc6b585a075328f94f0fdfd73af7b30a2592545356d6f74d2ba3a499e4e0abc",
+    "visible_output_sha256": "b9e25e48a1c2f140063f801cae9a5be1f946e026475205a3c8f055ee6888f18b",
+    "visible_output_rows": 400,
+    "visible_Kaggle_Linux_output_matches_PC_output": true,
+    "visible_output_is_not_hidden_test_answer_file": true,
+    "hidden_rerun_score_is_server_returned": true,
+    "R01_or_R02_changes_in_submitted_model": false,
+    "credentials_in_uploaded_assets": false
+  },
+  "durable_paths": {
+    "directory": "C:\\ProgramData\\ChemistryRunner\\artifacts\\casmi26\\kaggle-v1",
+    "official_score": "C:\\ProgramData\\ChemistryRunner\\artifacts\\casmi26\\kaggle-v1\\official-score.json",
+    "journal": "C:\\ProgramData\\ChemistryRunner\\artifacts\\casmi26\\kaggle-v1\\publish-journal.json"
+  },
+  "research_completed_in_same_session": "R02; see work/casmi26/research/R02-results.json and R02-interpretation.md",
+  "interpretation_limits": [
+    "MRR 0.147 is not 14.7 percent rank-one accuracy and not 14.7 percent project completion.",
+    "The public score is not the withheld private score or proof of exact recovery for every molecule.",
+    "The scalar public score alone cannot separate catalog coverage, instrument/domain shift and ranking errors.",
+    "R02's local advantage was established with true structures in the candidate catalog and without exact reference spectra. It is not an official improved submission score."
+  ]
+}
