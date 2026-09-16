@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-research-r01-20260916-01",
+  "id": "casmi-submit-preflight-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_rank_research.py",
+  "script": "tasks/casmi_submit_preflight.py",
   "arguments": [],
   "requireCuda": false
 }
