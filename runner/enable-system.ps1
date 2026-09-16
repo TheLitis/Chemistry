@@ -78,7 +78,8 @@ if ($service.StartName -notin @('LocalSystem', 'NT AUTHORITY\SYSTEM')) {
 
 New-Item -ItemType Directory -Force -Path $StateRoot | Out-Null
 foreach ($path in @($RunnerRoot, $StateRoot)) {
-    $aclOutput = & icacls.exe $path /grant "*$SystemSid:(OI)(CI)F" /T /C 2>&1
+    $aclGrant = "*${SystemSid}:(OI)(CI)F"
+    $aclOutput = & icacls.exe $path /grant $aclGrant /T /C 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to grant SYSTEM full control to ${path}: $($aclOutput -join [Environment]::NewLine)"
     }
