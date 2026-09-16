@@ -30,7 +30,10 @@ def main():
         return subprocess.call([str(py),str(Path(__file__).resolve())],env={**os.environ,'PYTHONUTF8':'1'})
     import pyarrow.parquet as pq
     repo=Path(__file__).resolve().parents[1];sys.path.insert(0,str(repo/'work/casmi26'))
+    sys.path.insert(0,str(repo/'tasks'))
+    from public_tls import verified_context
     from casmi26.production import sha256,write_json
+    context=verified_context()
     root=state/'data/external/coconut-2026-08';root.mkdir(parents=True,exist_ok=True)
     output=Path(os.environ['CHEMISTRY_REQUEST_OUTPUT'])
     archive=root/'coconut_csv_lite-08-2026.zip';start=time.monotonic()
@@ -38,12 +41,13 @@ def main():
             'release':'2026-08','license_on_download_page':'CC0; individual source provenance retained',
             'license_caveat':'Upstream source license question #767 has no maintainer clarification; do not relicense upstream annotations.',
             'retrieved_utc':dt.datetime.now(dt.timezone.utc).isoformat(),'commit':os.environ.get('GITHUB_SHA'),
+            'tls_certificate_validation':True,'tls_hostname_validation':True,'ca_source':'certifi',
             'test_data_read':False,'production_changed':False,'submission_made':False,'official_score':None}
     if not archive.exists():
         if shutil.disk_usage(root).free<3*1024**3:raise RuntimeError('Insufficient free space for external snapshot')
         tmp=archive.with_suffix('.part')
         try:
-            with urllib.request.urlopen(urllib.request.Request(URL,headers={'User-Agent':'CASMI26-research/1.0'}),timeout=60) as inp,tmp.open('wb') as out:
+            with urllib.request.urlopen(urllib.request.Request(URL,headers={'User-Agent':'CASMI26-research/1.0'}),timeout=60,context=context) as inp,tmp.open('wb') as out:
                 size=0
                 for block in iter(lambda:inp.read(4*1024*1024),b''):
                     size+=len(block)

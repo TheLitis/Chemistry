@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-confidence-publish-20260916-01",
+  "id": "casmi-coconut-verified-tls-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_confidence_publish.py",
-  "arguments": ["--stage", "publish"],
+  "script": "tasks/casmi_coconut_audit.py",
+  "arguments": [],
   "requireCuda": false
 }
