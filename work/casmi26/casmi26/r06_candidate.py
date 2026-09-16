@@ -122,7 +122,6 @@ def build_bundle(experiment,cache,anchor,destination):
 
 def _rows(rows):
     from .architectures import spectrum_digest
-    # Metadata/peak duplicates contain no additional spectral observation here.
     ordered={}
     for row in rows:ordered.setdefault(spectrum_digest(row),row)
     return [ordered[k] for k in sorted(ordered)]
@@ -145,6 +144,19 @@ def prepare_group(rows,*,budget=3):
     if budget=='all':x=np.mean(features.astype('f8'),axis=0).astype('f4')
     else:x=np.mean(features.astype('f2').astype('f4'),axis=0)
     return x,t,center,len(selected)
+
+
+def select_mass_candidates(masses,observed):
+    """Always return candidates; strict ranking behavior is unchanged when possible."""
+    masses=np.asarray(masses,dtype='f8')
+    if masses.ndim!=1 or not len(masses) or not np.isfinite(masses).all():raise ValueError('Invalid candidate masses')
+    if not np.isfinite(observed) or observed<=0:raise ValueError('Invalid observed mass')
+    idx=mass_candidates(masses,observed)
+    if len(idx):return idx,'mass_compatible'
+    idx=mass_candidates(masses,observed,50.,.02)
+    if len(idx):return idx,'expanded_mass_window'
+    near=np.argsort(np.abs(masses-observed),kind='stable')[:min(64,len(masses))]
+    return np.sort(near),'nearest_mass_no_compatible_structure'
 
 
 class Predictor:
@@ -223,38 +235,39 @@ def infer(test,bundle,output,*,device='cpu',budget='all',template=None):
     model=Predictor(bundle,device=device);config=manifest['selection']
     catalog=json.loads((bundle/'catalog.json').read_text());masses=np.array([r[3] for r in catalog])
     packed=np.load(bundle/'targets.npy',allow_pickle=False,mmap_mode='r')
-    predictions=[];details={};empty=[];start=time.monotonic()
+    predictions=[];details={};fallback=[];start=time.monotonic()
     for cid in order:
         z,observed,detail=model.group(groups[cid],budget=budget)
-        idx=mass_candidates(masses,observed);seen=set();unique=[]
+        idx,mode=select_mass_candidates(masses,observed);seen=set();unique=[]
         for i in idx:
             if catalog[i][2] not in seen:seen.add(catalog[i][2]);unique.append(int(i))
         idx=np.asarray(unique,dtype=np.int64)
-        guesses=[]
-        if len(idx):
-            bits=np.unpackbits(packed[idx],axis=1);basis=fingerprint_basis(z,bits)
-            w=np.asarray(config['weights'],dtype='f8');score=basis@(w/w.sum())
-            sigma=config['sigma_ppm']
-            if sigma is not None:score-=.5*((masses[idx]-observed)/max(.001,abs(observed)*sigma*1e-6))**2
-            ranked=np.argsort(-score,kind='stable')[:25];guesses=[catalog[idx[i]][1] for i in ranked]
-        else:empty.append(cid)
-        detail.update(candidate_count=len(idx),mass=observed,guesses=len(guesses))
+        if not len(idx):raise RuntimeError('Scorer-safe candidate policy returned no structures')
+        bits=np.unpackbits(packed[idx],axis=1);basis=fingerprint_basis(z,bits)
+        w=np.asarray(config['weights'],dtype='f8');score=basis@(w/w.sum())
+        sigma=config['sigma_ppm']
+        if sigma is not None:score-=.5*((masses[idx]-observed)/max(.001,abs(observed)*sigma*1e-6))**2
+        ranked=np.argsort(-score,kind='stable')[:25];guesses=[catalog[idx[i]][1] for i in ranked]
+        if not guesses:raise RuntimeError('No structural guesses after nonempty candidate selection')
+        if mode=='nearest_mass_no_compatible_structure':fallback.append(cid)
+        detail.update(candidate_count=len(idx),candidate_mode=mode,mass=observed,guesses=len(guesses))
         details[cid]=detail;predictions.append({'molecule_id':cid,'smiles':';'.join(guesses)})
         if len(predictions)%50==0:print('R06_INFER '+str(len(predictions)),flush=True)
     buf=io.StringIO(newline='');writer=csv.DictWriter(buf,fieldnames=['molecule_id','smiles'],lineterminator='\n')
     writer.writeheader();writer.writerows(predictions);text=buf.getvalue()
-    report={'status':'predictions_generated' if not empty else 'predictions_with_uncovered_queries','format':6,
-         'prediction_count':len(predictions),'test_spectra':sum(map(len,groups.values())), 'budget':budget,
+    report={'status':'predictions_generated','format':6,'prediction_count':len(predictions),
+         'test_spectra':sum(map(len,groups.values())), 'budget':budget,
          'test_sha256':sha256(test),'submission_sha256':hashlib.sha256(text.encode()).hexdigest(),
          'bundle_manifest_sha256':sha256(bundle/'r06-bundle.json'),'selection':config,'details':details,
-         'empty_candidate_rows':empty,'test_labels_used':False,'official_score':None,'order_source':order_source,
-         'candidate_not_champion':True,'weights_kind':manifest['weights_kind'],'seconds':time.monotonic()-start,
+         'empty_candidate_rows':[],'mass_incompatible_fallbacks':fallback,'test_labels_used':False,'official_score':None,
+         'order_source':order_source,'candidate_not_champion':True,'weights_kind':manifest['weights_kind'],
+         'seconds':time.monotonic()-start,
          'limitations':['Known-catalog retrieval; no de novo generator or external candidate expansion.',
              'Unchanged audited holdout-trained models; not a full-data refit.',
              'All input acquisitions are used in all mode; the token branch retains at most 32 peaks per encoded acquisition.',
              'Early fusion token branch uses at most three hashed acquisitions; all vector features contribute.',
              'Late fusion beyond three views is an inference extension, not a new independent validation result.',
-             'Empty candidate sets remain empty; no mass-incompatible dummy is fabricated.']}
+             'Expanded/nearest-mass fallbacks guarantee scorer-safe nonempty rows but do not imply chemical compatibility.']}
     output.parent.mkdir(parents=True,exist_ok=True)
     fd,name=tempfile.mkstemp(dir=output.parent,suffix='.csv.tmp')
     try:
