@@ -54,3 +54,12 @@ def test_v3_submission_gate_requires_known_scoring_error_and_verified_kernel_out
     assert not m.may_submit_correction({'numToday':3,'numAllowedNow':2},1,journal)
     journal['submission_v3_attempted']=True
     assert not m.may_submit_correction({'numToday':3,'numAllowedNow':2},0,journal)
+
+
+def test_server_error_confirmation_requires_the_exact_old_ref_and_format_failure():
+    m=load()
+    text='Your notebook generated a submission file with incorrect format. Some examples causing this are: wrong number of rows or columns, empty values, an incorrect data type for a value, or invalid submission values from what is expected.'
+    assert m.confirm_scoring_error({'ref':56278642,'error_description':text})==text
+    assert m.confirm_scoring_error({'ref':56278642,'error_description':''}) is None
+    assert m.confirm_scoring_error({'ref':123,'error_description':text}) is None
+    assert m.confirm_scoring_error({'ref':56278642,'error_description':'unrelated failure'}) is None
