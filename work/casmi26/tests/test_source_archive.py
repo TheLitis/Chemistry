@@ -24,7 +24,7 @@ def test_archive_scopes_ownership_exception_to_exact_repository(tmp_path,monkeyp
     for key in ('GIT_CONFIG_PARAMETERS','GIT_TEST_ASSUME_DIFFERENT_OWNER'):
         env.pop(key,None);monkeypatch.delenv(key,raising=False)
     subprocess.run(['git','init',str(repo)],env=env,check=True,capture_output=True)
-    (repo/'science.py').write_text('print(42)\n')
+    (repo/'science.py').write_bytes(b'print(42)\n')
     subprocess.run(['git','-C',str(repo),'add','science.py'],env=env,check=True,capture_output=True)
     subprocess.run(['git','-C',str(repo),'-c','user.name=Test','-c','user.email=test@example.invalid',
                     'commit','-m','fixture'],env=env,check=True,capture_output=True)
