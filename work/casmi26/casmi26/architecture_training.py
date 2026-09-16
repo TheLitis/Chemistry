@@ -34,7 +34,7 @@ def pool_acquisitions(views,tokens,masses,counts,*,budget=3,rng=None):
         mask[single]=np.arange(3)[None,:]==slot[single,None]
     elif budget==1:mask[:,1:]=False
     elif budget!=3:raise ValueError('Expected one or three acquisitions')
-    x=(views*mask[:,:,None]).sum(1)/mask.sum(1)[:,None]
+    x=(views*mask[:,:,None]).sum(1)/mask.sum(1).astype(np.float32)[:,None]
     tokens*=mask[:,:,None,None]
     mass=np.nanmedian(np.where(mask,masses,np.nan),axis=1)
     if not np.isfinite(x).all() or not np.isfinite(tokens).all() or not np.isfinite(mass).all():raise ValueError('Nonfinite acquisition batch')
