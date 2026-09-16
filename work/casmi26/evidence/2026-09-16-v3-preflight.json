@@ -1,0 +1,28 @@
+{
+  "evidence_type": "read_only_Kaggle_API_and_PC_preflight",
+  "checked_utc": "2026-09-16T04:59:13Z",
+  "run_id": 35057696297,
+  "job_id": 104671210223,
+  "artifact_id": 10431068172,
+  "source_commit": "a9c3008139ceb4afb83d7c78d256bc1cb69b9f69",
+  "account": "thelindortis",
+  "competition": "enveda-CASMI26-molecule-id-mass-spectra",
+  "submissions": [
+    {"ref": 56268669, "name": "baseline v1", "status": "COMPLETE", "public_score": 0.147, "private_score": null},
+    {"ref": 56269464, "name": "R03 confidence v2", "status": "COMPLETE", "public_score": 0.112, "private_score": null}
+  ],
+  "best_confirmed_public_score": 0.147,
+  "second_submission_improved": false,
+  "live_limits": {"numToday": 2, "numTotal": 2, "numAllowedNow": 3},
+  "internal_rolling_24h_cap": 2,
+  "new_submissions_in_preflight": 0,
+  "new_submissions_authorized_by_v3_task": 0,
+  "compute": {"torch": "2.14.0+cu126", "cuda_available": true, "gpu": "NVIDIA GeForce RTX 3070"},
+  "cache": {
+    "features_shape": [277566, 4104],
+    "fingerprints_packed_shape": [277566, 256],
+    "counts_shape": [277566],
+    "observed_shape": [277566]
+  },
+  "interpretation": "The paired local confidence-gate improvement did not transfer to the public leaderboard. V1 remains the best officially evaluated model. V3 is a separately evaluated candidate, not a replacement champion or score guarantee."
+}
