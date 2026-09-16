@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r06-release-reconciled-20260916-01",
+  "id": "casmi-r06-standalone-acceptance-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_r06_release.py",
+  "script": "tasks/casmi_r06_archive_acceptance.py",
   "arguments": [],
   "requireCuda": false
 }
