@@ -1,0 +1,47 @@
+{
+  "evidence_type": "completed_standalone_archive_execution_and_independently_verified_download",
+  "checked_utc": "2026-09-16T11:18:35.263996+00:00",
+  "commit": "9ecb71ca5a908991c45e68153ed6264b58a9e644",
+  "workflow_run_id": 35089538930,
+  "workflow_conclusion": "success",
+  "artifact_id": 10444065557,
+  "artifact_sha256": "c5bc463ee169a3d6fc41cac1c11c55d890875fe445663ddd3d12a9696d850879",
+  "runner": "ChemistryPC",
+  "execution_identity": "NT AUTHORITY\\SYSTEM",
+  "execution_sid": "S-1-5-18",
+  "script_exit_code": 0,
+  "script_duration_seconds": 39.106,
+  "tests": {"passed": 211, "failed": 0, "skipped": 0, "seconds": 15.69},
+  "standalone": {
+    "source_and_weights": "extracted from the delivered archive, not imported from the working repository",
+    "command": "predict_r06.py --test TEST.parquet --bundle bundle --output submission.csv --sample-submission TEMPLATE.csv --budget all --device cpu",
+    "python_environment": "existing isolated CASMI Python",
+    "offline_wheels_in_archive": false,
+    "cli_exit_code": 0,
+    "prediction_count": 400,
+    "spectra_used": 1213,
+    "submission_sha256": "750e3410dbb73e1cdf7dcb5b0b6a7e36c142ef05cd6eef8618b2fd016508cffe",
+    "byte_identical_to_repository_inference": true,
+    "downloaded_submission_hash_independently_verified": true
+  },
+  "model_archive": {
+    "path": "C:\\ProgramData\\ChemistryRunner\\artifacts\\casmi26\\research-r06\\release\\r06-research-candidate.zip",
+    "members": 35,
+    "sha256": "cd09b1eb9a18d29f000882cb9637224ac3b1b9bf571b85f1475b38cacd2753ea"
+  },
+  "source_archive": {
+    "members": 177,
+    "sha256": "bc2949933ec58f29d68ae4b20b04f985f723736069550cec1b81ade944dd864c",
+    "integrity_and_download_hash_verified": true,
+    "trust_scope": "command_only_exact_checkout",
+    "global_git_config_changed": false,
+    "acl_changed": false
+  },
+  "original_champion_unchanged": true,
+  "new_training_in_this_acceptance_check": false,
+  "new_submissions": 0,
+  "new_kaggle_uploads": 0,
+  "official_score": null,
+  "weights_kind": "unchanged_audited_holdout_models_not_full_refit",
+  "limitations": "This verifies a functioning archive and valid visible-example output, not hidden Kaggle correctness or de novo identification."
+}
