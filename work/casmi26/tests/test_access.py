@@ -10,6 +10,14 @@ def module():
     return out
 
 
+def prepare_module():
+    path=Path(__file__).resolve().parents[3]/'tasks/casmi_prepare.py'
+    assert path.exists(), 'Kaggle environment resolver is absent'
+    spec=importlib.util.spec_from_file_location('casmi_prepare_test',path)
+    out=importlib.util.module_from_spec(spec);spec.loader.exec_module(out)
+    return out
+
+
 def test_existing_process_token_takes_precedence():
     m=module()
     env,source=m.select_environment({'KAGGLE_API_TOKEN':'synthetic-process','OTHER':'keep'},
@@ -41,3 +49,14 @@ def test_scoped_files_do_not_enumerate_unrelated_downloads(tmp_path):
     (tmp_path/'personal-bank.pdf').write_bytes(b'private')
     records=m.official_files([tmp_path])
     assert [Path(r['path']).name for r in records]==['train.parquet']
+
+
+def test_staged_access_token_is_promoted_to_documented_environment_variable(tmp_path):
+    m=prepare_module()
+    state=tmp_path/'state';root=state/'kaggle';root.mkdir(parents=True)
+    token='synthetic-access-token-1234567890'
+    (root/'access_token').write_text(token,encoding='utf-8')
+    env=m.kaggle_environment(state,{'OTHER':'keep'})
+    assert env['KAGGLE_API_TOKEN']==token
+    assert env['OTHER']=='keep'
+    assert 'KAGGLE_USERNAME' not in env and 'KAGGLE_KEY' not in env
