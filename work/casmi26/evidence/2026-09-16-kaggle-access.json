@@ -1,0 +1,38 @@
+{
+  "evidence_type": "verified_kaggle_runner_access",
+  "verification_run": {
+    "url": "https://github.com/TheLitis/Chemistry/actions/runs/35050643487",
+    "job_id": 104650045689,
+    "commit": "e012e033829d0659d1802befcfc356cb84f39e5c",
+    "conclusion": "success",
+    "runner": "ChemistryPC"
+  },
+  "credential": {
+    "provider": "Kaggle",
+    "staged_token_present": true,
+    "staged_token_readable_by_runner": true,
+    "delivery_to_cli": "KAGGLE_API_TOKEN in child-process environment",
+    "secret_value_logged": false
+  },
+  "checks": {
+    "competition_files": true,
+    "submissions_list": true,
+    "entered_competitions": true,
+    "leaderboard_read": true,
+    "competition_files_observed": [
+      "sample_submission.csv",
+      "test.parquet",
+      "train.parquet"
+    ]
+  },
+  "regression": {
+    "red_run": "https://github.com/TheLitis/Chemistry/actions/runs/35050489502",
+    "red_result": "1 failed, 87 passed, 1 skipped",
+    "green_run": "https://github.com/TheLitis/Chemistry/actions/runs/35050591539",
+    "green_result": "88 passed, 1 skipped"
+  },
+  "root_cause": "KAGGLE_CONFIG_DIR was used for access_token discovery, but Kaggle CLI 2.2.4 authenticated successfully when the same staged token was supplied through the documented KAGGLE_API_TOKEN environment variable.",
+  "submission_made_during_setup": false,
+  "official_score": null,
+  "status": "authorized_competition_access_verified"
+}
