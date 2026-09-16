@@ -22,6 +22,15 @@ def test_metadata_is_private_offline_and_uses_two_owner_datasets():
     assert meta['dataset_sources']==['owner/'+m.V1_DATASET,'owner/'+m.R06_DATASET]
 
 
+def test_notebook_reads_auto_extracted_r06_mount_not_missing_zip(tmp_path):
+    m=load();path=m.build_notebook(tmp_path/'r06.ipynb');book=json.loads(path.read_text())
+    source='\n'.join(''.join(c.get('source',[])) for c in book['cells'] if c['cell_type']=='code')
+    assert "rglob('r06-bundle.json')" in source
+    assert "PACKAGE/'predict_r06.py'" in source
+    assert "rglob('r06-research-candidate.zip')" not in source
+    assert 'extractall' not in source
+
+
 def test_user_authorized_single_submission_still_respects_official_limit():
     m=load()
     assert m.may_submit({'numToday':2,'numAllowedNow':3},pending=0,journal={})
