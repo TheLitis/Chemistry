@@ -1,4 +1,5 @@
 """R06 checkpoint packaging and inference contracts, without provider access."""
+import csv
 import json
 from pathlib import Path
 import numpy as np
@@ -93,6 +94,26 @@ def test_all_acquisitions_inference_and_permutation(tmp_path,pooling):
     assert output.read_bytes()==original
     assert r2['selection']==r['selection']
     with pytest.raises(ValueError,match='overwrite'):infer(test,b,test,device='cpu')
+
+
+def test_hidden_mass_without_strict_candidates_still_returns_valid_guesses(tmp_path):
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from casmi26.r06_candidate import build_bundle,infer
+    root,cache,anchor,train,test,rows=fixture(tmp_path)
+    b=tmp_path/'bundle';build_bundle(root,cache,anchor,b)
+    # Move every query far outside the tiny fixture catalog while keeping each
+    # compound internally mass-consistent. A code-competition rerun must still
+    # produce a nonempty, scorer-safe cell for every current test molecule.
+    shifted=[dict(row,precursor_mz=float(row['precursor_mz'])+500.0) for row in rows]
+    pq.write_table(pa.Table.from_pylist(shifted),test)
+    out=tmp_path/'fallback.csv';report=infer(test,b,out,device='cpu',budget='all')
+    with out.open(encoding='utf-8',newline='') as f:pred=list(csv.DictReader(f))
+    assert len(pred)==2
+    assert all(1<=len(r['smiles'].split(';'))<=25 for r in pred)
+    assert report['empty_candidate_rows']==[]
+    assert sorted(report['mass_incompatible_fallbacks'])==['000','001']
+    assert all(d['candidate_mode']=='nearest_mass_no_compatible_structure' for d in report['details'].values())
 
 
 def test_three_view_path_matches_training_transform(tmp_path):
