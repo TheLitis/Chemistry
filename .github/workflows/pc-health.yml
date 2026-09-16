@@ -20,6 +20,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify permanent SYSTEM identity
+        run: |
+          $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+          $sid = $identity.User.Value
+          Write-Host "Execution identity: $($identity.Name) ($sid)"
+          if ($sid -ne 'S-1-5-18') {
+            throw "ChemistryPC health requires NT AUTHORITY\SYSTEM (S-1-5-18). Current: $($identity.Name) ($sid)."
+          }
+
       - name: Preflight hardware diagnostics
         run: |
           $out = Join-Path $env:RUNNER_TEMP 'chemistry-health-pre'
