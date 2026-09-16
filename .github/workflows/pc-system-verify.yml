@@ -1,0 +1,49 @@
+name: ChemistryPC SYSTEM verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'runner/system-verify-trigger.txt'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chemistry-pc-exclusive
+  cancel-in-progress: false
+
+jobs:
+  verify-system:
+    runs-on: [self-hosted, Windows, X64, ChemistryPC]
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ". '{0}'"
+    steps:
+      - name: Verify process and service identity
+        run: |
+          $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+          $sid = $identity.User.Value
+          Write-Host "Machine: $env:COMPUTERNAME"
+          Write-Host "Execution identity: $($identity.Name)"
+          Write-Host "Execution SID: $sid"
+
+          $service = Get-CimInstance Win32_Service | Where-Object {
+            $_.Name -like 'actions.runner.*' -and ($_.Name -like '*ChemistryPC*' -or $_.DisplayName -like '*ChemistryPC*')
+          } | Select-Object -First 1
+          if (-not $service) { throw 'ChemistryPC service not found.' }
+          Write-Host "Service: $($service.Name)"
+          Write-Host "Service state: $($service.State)"
+          Write-Host "Service account: $($service.StartName)"
+
+          if ($sid -ne 'S-1-5-18') {
+            throw "Runner process is not NT AUTHORITY\\SYSTEM. Current identity: $($identity.Name) ($sid)."
+          }
+          if ($service.StartName -notin @('LocalSystem', 'NT AUTHORITY\\SYSTEM')) {
+            throw "Runner service is not configured as LocalSystem. Current: $($service.StartName)."
+          }
+          if ($service.State -ne 'Running') {
+            throw "Runner service is not Running. Current: $($service.State)."
+          }
+          Write-Host 'SYSTEM verification: PASS'
