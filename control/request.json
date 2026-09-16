@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r06-score-recheck-20260916-03",
+  "id": "casmi-r06-score-poll-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_r06_kaggle_submit.py",
-  "arguments": ["--stage", "status"],
+  "script": "tasks/casmi_r06_score_poll.py",
+  "arguments": [],
   "requireCuda": false
 }
