@@ -1,0 +1,49 @@
+{
+  "evidence_type": "summary_transcribed_from_completed_PC_run_logs",
+  "preparation": {
+    "run_id": 35046778364,
+    "job_id": 104638186399,
+    "commit": "6fa0d0701c639f626e9c6dd3e2c6eaf0dc97712a",
+    "conclusion": "success",
+    "spectra_seen": 2539608,
+    "spectra_accepted": 2487355,
+    "rejected_invalid_spectrum_or_adduct": 24,
+    "rejected_precursor_inconsistent": 52229,
+    "catalog_raw_structure_records": 277566,
+    "records_with_features": 276241,
+    "visible_test_molecules": 400,
+    "visible_test_spectra": 1213,
+    "mass_candidate_coverage_only": 400
+  },
+  "training": {
+    "run_id": 35047669060,
+    "job_id": 104640974682,
+    "commit": "ba2594bd2e5a563cd7dcc24d918ba7d420c1936d",
+    "conclusion": "success",
+    "runner": "ChemistryPC",
+    "software_tests_passed": 82,
+    "device": "cuda",
+    "epochs_each": 30,
+    "holdout_training_records": 248523,
+    "full_refit_records": 276241,
+    "parameters": 3152384,
+    "checkpoint_sha256": "4d79a6d4f24060cd0f7c09bebefbced2c9e1672cb1cdf5f7831cd5a19c03b55d"
+  },
+  "validation": {
+    "protocol": "10% structure-key-disjoint holdout; evaluate 4000 keys; known-structure inclusive catalog; not de novo",
+    "molecules": 4000,
+    "training_validation_key_overlap": 0,
+    "learned": {"mrr_at_25": 0.5668167885213286, "top1_accuracy": 0.42875, "recall_at_25": 0.918},
+    "mass_only": {"mrr_at_25": 0.24703725774581567, "top1_accuracy": 0.13875, "recall_at_25": 0.68875},
+    "ambiguous_molecules": 3922,
+    "ambiguous_learned_mrr_at_25": 0.5584566940554091,
+    "ambiguous_mass_only_mrr_at_25": 0.23231744798145404,
+    "evaluates_spectral_neural_ensemble": false,
+    "evaluates_hidden_kaggle_test": false
+  },
+  "train_sha256": "9423f90ec08b941a9646b535bf0606183e86ff0c5a297978f5a70693d41bcd98",
+  "visible_test_sha256": "2fa29c4aa06e93b48e0cd6619fd2de3f4e956f0019d242141678b7287f2b43e0",
+  "rdkit": "2026.03.3",
+  "official_score": null,
+  "submission_made": false
+}
