@@ -36,7 +36,8 @@ def main():
     state=Path(os.environ['CHEMISTRY_STATE_ROOT']);py=state/'envs/casmi26/python.exe'
     if Path(sys.executable).resolve()!=py.resolve():
         return os.spawnve(os.P_WAIT,str(py),[str(py),str(Path(__file__).resolve())],{**os.environ,'PYTHONUTF8':'1','PYTHONIOENCODING':'utf-8'})
-    repo=Path(__file__).resolve().parents[1]
+    repo=Path(__file__).resolve().parents[1];sys.path.insert(0,str(repo/'work/casmi26'))
+    from casmi26.production import write_json
     prep=load('prep',repo/'tasks/casmi_prepare.py')
     env=prep.kaggle_environment(state,dict(os.environ))
     root=state/'artifacts/casmi26/kaggle-r06-v1';journal_path=root/'publish-journal.json'
@@ -54,7 +55,6 @@ def main():
     if len(matches)!=1:raise RuntimeError('Old R06 submission was not uniquely returned by Kaggle')
     error=confirm_scoring_error(matches[0])
     if not error:raise RuntimeError('Kaggle did not return the expected scoring-format error')
-    from work.casmi26.casmi26.production import write_json
     journal.update(scoring_error_confirmed=True,old_scoring_error=error,
                    scoring_error_confirmed_utc=dt.datetime.now(dt.timezone.utc).isoformat())
     write_json(journal_path,journal)
