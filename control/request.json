@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r06-score-poll-20260916-01",
+  "id": "casmi-r06-scoring-diagnose-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_r06_score_poll.py",
+  "script": "tasks/casmi_r06_scoring_diagnose.py",
   "arguments": [],
   "requireCuda": false
 }
