@@ -11,6 +11,7 @@ $StateRoot = Join-Path $env:ProgramData 'ChemistryRunner'
 $MachineConfigPath = Join-Path $StateRoot 'machine.json'
 $PythonExe = Join-Path $StateRoot 'python\python.exe'
 $TasksRoot = Join-Path $RepoRoot 'tasks'
+$SystemSid = 'S-1-5-18'
 
 function Assert-Request {
     param($Request)
@@ -56,6 +57,15 @@ function Assert-Request {
             if ($argument -isnot [string]) { throw 'Every arguments entry must be a string.' }
         }
     }
+}
+
+function Assert-SystemExecution {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $sid = if ($identity.User) { $identity.User.Value } else { '' }
+    if ($sid -ne $SystemSid) {
+        throw "ChemistryPC refuses privileged task execution outside NT AUTHORITY\SYSTEM. Current identity: $($identity.Name), SID: $sid; required SID: $SystemSid. Run runner\enable-system.ps1 once from elevated PowerShell."
+    }
+    return $identity
 }
 
 function Invoke-LoggedNative {
@@ -106,6 +116,10 @@ if ($ValidateOnly) {
     Write-Host "Request '$($request.id)' is valid: task=$($request.task)"
     exit 0
 }
+
+$executionIdentity = Assert-SystemExecution
+$executionSid = $executionIdentity.User.Value
+Write-Host "Privileged execution identity: $($executionIdentity.Name) ($executionSid)" -ForegroundColor Green
 
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $resultPath = Join-Path $OutputDirectory 'request-result.json'
@@ -194,5 +208,8 @@ try {
         duration_seconds = [math]::Round(($finished - $started).TotalSeconds, 3)
         runner = $env:RUNNER_NAME
         machine = $env:COMPUTERNAME
+        execution_identity = $executionIdentity.Name
+        execution_sid = $executionSid
+        privilege_mode = 'SYSTEM'
     } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $resultPath -Encoding UTF8
 }
