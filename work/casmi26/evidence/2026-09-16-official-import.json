@@ -1,0 +1,43 @@
+{
+  "record_type": "verified_execution_summary",
+  "source_archive": "C:\\Users\\loval\\Downloads\\enveda-CASMI26-molecule-id-mass-spectra.zip",
+  "import_run": {
+    "url": "https://github.com/TheLitis/Chemistry/actions/runs/35045325423",
+    "job_id": 104633779228,
+    "commit": "1c3f241476dc53ccee08a3afa552aa3ba96157cd",
+    "conclusion": "failure",
+    "failure": "PermissionError: [Errno 13] Permission denied opening the user-specified archive",
+    "archive_opened": false,
+    "data_imported": false
+  },
+  "diagnostic_run": {
+    "url": "https://github.com/TheLitis/Chemistry/actions/runs/35045409955",
+    "job_id": 104634034971,
+    "commit": "755c3052eaaf98afc4f3a14cdf0202acb6458b59",
+    "conclusion": "success",
+    "runner": "ChemistryPC",
+    "service_name": "actions.runner.TheLitis-Chemistry.ChemistryPC",
+    "identity": "NT AUTHORITY\\NETWORK SERVICE",
+    "sid": "S-1-5-20",
+    "archive_read_succeeded": false,
+    "archive_inner_hresult": -2147024891,
+    "downloads_metadata_and_acl_read": "UnauthorizedAccessException",
+    "state_data_directory_accessible": true,
+    "tests": {"passed": 61, "failed": 0, "seconds": 4.35},
+    "kaggle_credential_source_kind": "not_provisioned",
+    "kaggle_file_listing_succeeded": false,
+    "kaggle_file_listing_exit_code": 1,
+    "kaggle_registry_warning": "PermissionError"
+  },
+  "new_files": [
+    "tasks/casmi_import.py",
+    "tasks/casmi_file_access.ps1",
+    "work/casmi26/tests/test_archive_import.py"
+  ],
+  "permissions_changed": false,
+  "secrets_logged": false,
+  "official_training_started_in_this_pass": false,
+  "official_score": null,
+  "submission_made": false,
+  "next_required_access": "Grant S-1-5-20 read access to this archive only, or place an explicitly staged copy in the accessible data directory. No access to the whole user profile is required. Kaggle authentication is separate from importing the local archive."
+}
