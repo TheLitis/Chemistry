@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-first-score-20260916-01",
+  "id": "casmi-score-reconcile-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_kaggle_publish.py",
-  "arguments": ["--stage", "status"],
+  "script": "tasks/casmi_score_status.py",
+  "arguments": ["--ref", "56268669"],
   "requireCuda": false
 }
