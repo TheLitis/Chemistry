@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-scoring-diagnostics-20260916-01",
+  "id": "casmi-score-final-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_scoring_diagnostics.py",
-  "arguments": [],
+  "script": "tasks/casmi_score_status.py",
+  "arguments": ["--ref", "56268669"],
   "requireCuda": false
 }
