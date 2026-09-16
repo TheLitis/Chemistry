@@ -90,6 +90,24 @@ def parse_history(text):
     return rows
 
 
+def validate_downloaded_output(folder):
+    folder=Path(folder);csv_path=folder/'submission.csv'
+    manifest=json.loads((folder/'submission.csv.report.json').read_text(encoding='utf-8'))
+    digest=hashlib.sha256(csv_path.read_bytes()).hexdigest()
+    if manifest.get('submission_sha256')!=digest:raise ValueError('Downloaded notebook CSV hash mismatch')
+    with csv_path.open(encoding='utf-8-sig',newline='') as f:
+        reader=csv.DictReader(f)
+        if reader.fieldnames!=['molecule_id','smiles']:raise ValueError('Unexpected notebook output columns')
+        rows=list(reader)
+    ids=[r['molecule_id'] for r in rows]
+    if not rows or len(ids)!=len(set(ids)) or any(not v for v in ids):raise ValueError('Invalid notebook output IDs')
+    if len(rows)!=manifest.get('prediction_count'):raise ValueError('Notebook output count mismatch')
+    for r in rows:
+        guesses=r['smiles'].split(';')
+        if not 1<=len(guesses)<=25 or any(not s.strip() for s in guesses):raise ValueError('Invalid guess list')
+    return {'rows':len(rows),'sha256':digest,'verified_against_notebook_report':True}
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--stage',choices=('publish','submit','status'),required=True)
@@ -190,8 +208,17 @@ def main(argv=None):
             text,_=run('kernel_status',['kernels','status',kernel])
             if 'complete' not in text.lower() or any(s in text.lower() for s in ('error','failed')):
                 raise RuntimeError('Notebook has not completed successfully')
-            file_text,_=run('kernel_files',['kernels','files',kernel,'-v','--page-size','200'])
-            if not re.search(r'(^|\n)submission\.csv,',file_text):raise RuntimeError('Notebook has no submission.csv output')
+            # Output listings are paginated; installed dependency files can fill
+            # the first page. Download only the two exact result filenames across
+            # pages instead of interpreting first-page absence as failure.
+            with tempfile.TemporaryDirectory(prefix='verified-output-',dir=root) as temporary:
+                run('verify_output_download',['kernels','output',kernel,'-p',temporary,
+                    '--file-pattern',r'(^|/)submission\.csv(?:\.report\.json)?$','--page-size','200'],timeout=300)
+                verified=validate_downloaded_output(Path(temporary))
+                for name in ('submission.csv','submission.csv.report.json'):
+                    shutil.copy2(Path(temporary)/name,root/('kaggle-'+name))
+            report['downloaded_output']=verified
+            journal['verified_kaggle_output']=verified;persist()
             # Journal before the write. A network error must never blindly retry.
             journal['submission_attempted']=True;journal['attempted_utc']=dt.datetime.now(dt.timezone.utc).isoformat();persist()
             msg='CASMI26 baseline v1 - trained catalog + spectral matching; first official evaluation'
