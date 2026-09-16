@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-v3-full-implementation-20260916-02",
+  "id": "casmi-v3-verify-delivery-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_v3.py",
-  "arguments": ["--stage", "all", "--epochs", "10"],
+  "script": "tasks/casmi_v3_verify.py",
+  "arguments": [],
   "requireCuda": false
 }
