@@ -1,0 +1,12 @@
+{
+  "evidence_type": "user_provided_kaggle_submissions_ui_screenshot",
+  "competition": "Enveda CASMI 2026 - Molecule ID From Mass Spectra",
+  "submission_ref": 56278642,
+  "submission_description": "CASMI26 R06 - two-seed MassSet hybrid rank ensemble; all spectra",
+  "notebook_label": "CASMI26 R06 MassSet Rank Ensemble - Version 2",
+  "ui_status": "Submission Scoring Error",
+  "public_score_displayed": false,
+  "observed_date": "2026-09-16",
+  "interpretation": "The R06 competition submission was not successfully scored. A CLI history row reported COMPLETE with an empty publicScore, so COMPLETE without a numeric score is not treated as scoring success.",
+  "new_submission_created_by_this_evidence_commit": false
+}
