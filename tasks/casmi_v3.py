@@ -1,6 +1,7 @@
 """Full v3 implementation run. No Kaggle writes; previous champion is preserved."""
 from __future__ import annotations
 import argparse
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -9,6 +10,12 @@ import subprocess
 import sys
 import time
 import zipfile
+
+
+def dataset_path(repo, root):
+    spec=importlib.util.spec_from_file_location('casmi_staged_v3',Path(repo)/'tasks/casmi_staged.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module.find_dataset(root)
 
 
 def main():
@@ -32,8 +39,7 @@ def main():
     print(tests.stdout,flush=True);(out/'v3-tests.log').write_text(tests.stdout+'\n'+tests.stderr,encoding='utf-8')
     if tests.returncode:raise RuntimeError('Tests failed before any v3 training')
     if a.stage=='tests':return 0
-    from casmi_staged import find_dataset
-    data=find_dataset(state/'data/external');base=state/'cache/casmi26/official-v1'
+    data=dataset_path(repo,state/'data/external');base=state/'cache/casmi26/official-v1'
     cache=state/'cache/casmi26/highres-v3';old=state/'artifacts/casmi26/official-v1'
     experiment=state/'artifacts/casmi26/research-v3';bundle=state/'artifacts/casmi26/highres-v3/bundle'
     started=time.monotonic();report={'commit':os.environ.get('GITHUB_SHA'),'stage':a.stage,'new_kaggle_submissions':0,'official_score':None}
@@ -48,7 +54,6 @@ def main():
             shutil.copytree(wheels,bundle/'wheels',dirs_exist_ok=True)
             notebook=build_notebook(bundle.parent/'casmi26-v3.ipynb')
             workspace=bundle.parent/'notebook-output';workspace.mkdir(parents=True,exist_ok=True)
-            # Execute the actual generated code cell, not a substituted inference path.
             source=json.loads(notebook.read_text());scope={'__name__':'__main__'}
             env_keys=('CASMI_INPUT_ROOT','CASMI_BUNDLE_DIR','CASMI_WORK_ROOT');prior={k:os.environ.get(k) for k in env_keys}
             os.environ.update(CASMI_INPUT_ROOT=str(data),CASMI_BUNDLE_DIR=str(bundle),CASMI_WORK_ROOT=str(workspace))
