@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-research-r02-20260916-01",
+  "id": "casmi-first-submit-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_ensemble_research.py",
-  "arguments": [],
+  "script": "tasks/casmi_kaggle_publish.py",
+  "arguments": ["--stage", "submit"],
   "requireCuda": false
 }
