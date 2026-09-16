@@ -1,0 +1,68 @@
+{
+  "evidence_type": "verified_completed_ChemistryPC_acceptance_artifact",
+  "checked_utc": "2026-09-16T06:50:18.673345+00:00",
+  "execution_commit": "3799ea69f58053aac08b333b7ca6a702a88819b4",
+  "workflow_run_id": 35064970209,
+  "workflow_job_id": 104693133727,
+  "artifact_id": 10434370612,
+  "artifact_sha256": "70c75a22dff907284a5ebb4c132b189cf1002097642b0d8f40e8259ff8e79831",
+  "conclusion": "success",
+  "tests": {"passed": 185, "failed": 0, "seconds": 11.71},
+  "hosted_ci": {
+    "run_id": 35064970320,
+    "windows_job_id": 104693134314,
+    "ubuntu_job_id": 104693134648,
+    "both_jobs_succeeded": true
+  },
+  "full_root_entrypoint_inference": {
+    "entrypoint": "predict.py --test ... --train ... --bundle ... --output ... --sample-submission ...",
+    "model_format": 3,
+    "input_features": 8200,
+    "head_sizes": [2048, 4096, 8192],
+    "head_weights": [0.5, 0.25, 0.25],
+    "routing": "confidence",
+    "test_spectra": 1213,
+    "molecules_and_output_rows": 400,
+    "total_guesses": 9655,
+    "all_guesses_valid_and_distinct_within_each_row": true,
+    "mass_incompatible_fallbacks": [],
+    "reference_spectra_scanned": 2539608,
+    "reference_spectra_selected": 367461,
+    "seconds": 340.9979991,
+    "test_labels_used": false,
+    "byte_identical_to_previously_verified_V3_output": true,
+    "submission_sha256": "c0e035ee4a21cd703ccc5f2a52ceaaab2d93aa3eea27dd5ff1b10e0d0edf198a",
+    "model_sha256": "1b22b99a04b2f30e81fcb55fe50077f6f6b0a29674e91521e1f70db3dbac82bb",
+    "train_sha256": "9423f90ec08b941a9646b535bf0606183e86ff0c5a297978f5a70693d41bcd98",
+    "test_sha256": "2fa29c4aa06e93b48e0cd6619fd2de3f4e956f0019d242141678b7287f2b43e0"
+  },
+  "release": {
+    "directory": "C:\\ProgramData\\ChemistryRunner\\artifacts\\casmi26\\highres-v3\\release-verified",
+    "submission": "submission.csv",
+    "notebook": "casmi26-v3.ipynb",
+    "notebook_sha256": "bb61dabd17ce4ee1dbbeeb0538dc657ee5bd52bacec04b31fac4ad58ec6cd1ea",
+    "notebook_rebuilt_not_rerun_this_pass": true,
+    "archive": "casmi-v3-release.zip",
+    "archive_bytes": 358643958,
+    "archive_sha256": "ffa620eef58198475c2957cfbf0157d4f1357171a4803fa25d8d12493f2bfdf0",
+    "contains_model_and_offline_dependencies": true
+  },
+  "kaggle_history_at_check": [
+    {"ref": 56269464, "version": "confidence-v2", "status": "COMPLETE", "public_score": 0.112},
+    {"ref": 56268669, "version": "baseline-v1", "status": "COMPLETE", "public_score": 0.147}
+  ],
+  "live_kaggle_limits": {"numToday": 2, "numTotal": 2, "numAllowedNow": 3},
+  "internal_rolling_24h_cap": 2,
+  "new_submissions_in_acceptance": 0,
+  "new_uploads_in_acceptance": 0,
+  "new_training_in_acceptance": false,
+  "original_official_champion_unchanged": true,
+  "official_score_for_v3": null,
+  "candidate_not_champion": true,
+  "limitations": [
+    "The visible example output is not a hidden-test correctness result.",
+    "V3 still retrieves from a structure catalog; it is not a de novo generator.",
+    "Local V3 accuracy and input-budget diagnostics are documented separately in research/V3-results.json and research/V3-spectrum-budget.json.",
+    "Kaggle/Linux execution and official scoring of V3 remain unverified; no third submission was created."
+  ]
+}
