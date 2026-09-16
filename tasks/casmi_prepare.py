@@ -47,14 +47,24 @@ def kaggle_environment(state: Path, inherited: dict) -> dict:
     if env.get('KAGGLE_CONFIG_DIR'): roots.append(Path(env['KAGGLE_CONFIG_DIR']))
     roots += [state/'kaggle',state/'.kaggle',Path.home()/'.kaggle',Path(r'C:\Users\loval\.kaggle')]
     for root in roots:
-        for name in ('access_token','kaggle.json'):
-            file=root/name
-            try:
-                if file.is_file():
-                    with file.open('rb'): pass
-                    env['KAGGLE_CONFIG_DIR']=str(root)
+        token_file=root/'access_token'
+        try:
+            if token_file.is_file() and not token_file.is_symlink():
+                token=token_file.read_text(encoding='utf-8-sig').strip()
+                if token:
+                    env.pop('KAGGLE_USERNAME',None);env.pop('KAGGLE_KEY',None)
+                    env['KAGGLE_API_TOKEN']=token
                     return env
-            except OSError: pass
+        except OSError:
+            pass
+        legacy=root/'kaggle.json'
+        try:
+            if legacy.is_file() and not legacy.is_symlink():
+                with legacy.open('rb'): pass
+                env['KAGGLE_CONFIG_DIR']=str(root)
+                return env
+        except OSError:
+            pass
     return env
 
 
