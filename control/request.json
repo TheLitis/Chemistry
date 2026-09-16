@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "id": "casmi-r06-scoring-diagnose-20260916-01",
+  "id": "casmi-r06-scoring-diagnose-20260916-02",
   "task": "script",
   "script": "tasks/casmi_r06_scoring_diagnose.py",
   "arguments": [],
