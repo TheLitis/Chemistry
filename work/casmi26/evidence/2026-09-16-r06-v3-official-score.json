@@ -1,0 +1,57 @@
+{
+  "evidence_type": "official_kaggle_public_score_after_scorer_safe_correction",
+  "competition": "enveda-CASMI26-molecule-id-mass-spectra",
+  "checked_utc": "2026-09-16T14:07:11.8463428+00:00",
+  "previous_failed_submission": {
+    "ref": 56278642,
+    "description": "CASMI26 R06 - two-seed MassSet hybrid rank ensemble; all spectra",
+    "ui_status": "Submission Scoring Error",
+    "server_error_description": "Your notebook generated a submission file with incorrect format. Some examples causing this are: wrong number of rows or columns, empty values, an incorrect data type for a value, or invalid submission values from what is expected.",
+    "public_score": null
+  },
+  "correction": {
+    "reason": "R06 production could emit an empty smiles cell when the strict mass candidate window was empty on hidden reruns.",
+    "policy": [
+      "original strict mass-compatible candidate window",
+      "expanded 50 ppm / 0.02 Da candidate window if strict is empty",
+      "up to 64 nearest-mass catalog structures if both compatible windows are empty"
+    ],
+    "visible_output_unchanged": true,
+    "visible_submission_sha256": "750e3410dbb73e1cdf7dcb5b0b6a7e36c142ef05cd6eef8618b2fd016508cffe",
+    "visible_rows": 400,
+    "visible_test_spectra": 1213,
+    "visible_mass_incompatible_fallbacks": [],
+    "private_kernel_version": 3
+  },
+  "corrected_submission": {
+    "ref": 56280209,
+    "description": "CASMI26 R06.1 - MassSet rank ensemble + scorer-safe mass fallback",
+    "status": "COMPLETE",
+    "public_score": 0.112,
+    "error_description": "",
+    "scored_successfully": true
+  },
+  "comparison": {
+    "v1_ref": 56268669,
+    "v1_public_score": 0.147,
+    "v2_ref": 56269464,
+    "v2_public_score": 0.112,
+    "r06_corrected_ref": 56280209,
+    "r06_corrected_public_score": 0.112,
+    "official_champion_remains": "V1",
+    "official_champion_score": 0.147
+  },
+  "quota_after": {
+    "numToday": 4,
+    "numTotal": 4,
+    "numAllowedNow": 1
+  },
+  "status_workflow_run_id": 35105871769,
+  "status_workflow_job_id": 104826806508,
+  "status_artifact_id": 10450481625,
+  "notes": [
+    "The correction resolves the Kaggle scoring-format failure but does not improve hidden ranking quality.",
+    "R06 local known-catalog validation therefore does not transfer to the hidden competition distribution.",
+    "No additional submission should be spent without a materially different candidate-generation/domain-adaptation method and independent evidence."
+  ]
+}
