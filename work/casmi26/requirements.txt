@@ -3,3 +3,5 @@ numpy==2.3.5
 rdkit==2026.3.3
 # Streaming Parquet input.
 pyarrow==21.0.0
+# Public research downloads retain certificate and hostname verification.
+certifi>=2025.1.31
