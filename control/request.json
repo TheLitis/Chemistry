@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-full-public-20260916-01",
+  "id": "casmi-access-20260916-03",
   "task": "script",
-  "script": "tasks/casmi_full_run.py",
+  "script": "tasks/casmi_access_check.py",
   "arguments": [],
   "requireCuda": false
 }
