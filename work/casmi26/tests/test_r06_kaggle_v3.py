@@ -32,6 +32,7 @@ def test_v3_notebook_embeds_current_inference_source_not_old_dataset_code(tmp_pa
         source=archive.read('casmi26/r06_candidate.py').decode()
     assert 'def select_mass_candidates(' in source
     assert "'nearest_mass_no_compatible_structure'" in source
+    assert m.VISIBLE_HASH=='750e3410dbb73e1cdf7dcb5b0b6a7e36c142ef05cd6eef8618b2fd016508cffe'
 
 
 def test_v3_kernel_metadata_is_private_offline_and_reuses_existing_datasets():
