@@ -1,0 +1,69 @@
+{
+  "evidence_type": "summary_of_completed_PC_delivery_and_hash_verification_logs",
+  "delivery_run": {
+    "url": "https://github.com/TheLitis/Chemistry/actions/runs/35048437684",
+    "job_id": 104643309079,
+    "commit": "33c9b14e0c8173521b83cf06a61c68d8031ec91d",
+    "conclusion": "success",
+    "artifact_id": 10428186845,
+    "artifact_url": "https://github.com/TheLitis/Chemistry/actions/runs/35048437684/artifacts/10428186845"
+  },
+  "verification_run": {
+    "url": "https://github.com/TheLitis/Chemistry/actions/runs/35049229230",
+    "job_id": 104645767121,
+    "commit": "c2f89a9aebe1e4eca579178b4c343fc848b53922",
+    "conclusion": "success",
+    "software_tests_passed": 88,
+    "test_seconds": 5.07,
+    "trained_bundle_hashes_verified": true,
+    "submission_hash_verified": true,
+    "zip_hash_verified": true,
+    "powershell_helper_syntax_verified": true,
+    "credentials_staged_by_this_run": false
+  },
+  "inference": {
+    "visible_example_molecules": 400,
+    "test_spectra_used": 1213,
+    "submission_rows": 400,
+    "unique_submission_ids": 400,
+    "all_smiles_valid": true,
+    "all_guesses_distinct_by_tautomer_key": true,
+    "mass_incompatible_fallbacks": [],
+    "reference_spectra_scanned": 2539608,
+    "reference_spectra_selected": 367461,
+    "seconds": 332.4613756000035,
+    "submission_sha256": "b9e25e48a1c2f140063f801cae9a5be1f946e026475205a3c8f055ee6888f18b",
+    "test_labels_used": false
+  },
+  "notebook": {
+    "code_cells_executed": 5,
+    "execution": "sequential cells in isolated Windows Python, including actual trained inference",
+    "source_embedded": true,
+    "uses_current_test_mount_in_hidden_rerun": true,
+    "assets_contain_test_ids_or_predictions": false,
+    "offline_linux_wheels_resolved_for_cpython": ["3.12", "3.13"],
+    "actual_kaggle_linux_execution_verified": false
+  },
+  "paths": {
+    "directory": "C:\\ProgramData\\ChemistryRunner\\artifacts\\casmi26\\official-v1",
+    "submission": "C:\\ProgramData\\ChemistryRunner\\artifacts\\casmi26\\official-v1\\submission.csv",
+    "notebook": "C:\\ProgramData\\ChemistryRunner\\artifacts\\casmi26\\official-v1\\casmi26-submission.ipynb",
+    "bundle": "C:\\ProgramData\\ChemistryRunner\\artifacts\\casmi26\\official-v1\\bundle",
+    "archive": "C:\\ProgramData\\ChemistryRunner\\artifacts\\casmi26\\official-v1\\casmi26-official-delivery.zip"
+  },
+  "archive_bytes": 243412845,
+  "archive_sha256": "d4348fb7104b3872c9e070e748a1dd5bff26b61e7fba54b733e53f455cbb2de5",
+  "kaggle_access": {
+    "file_listing_succeeded": false,
+    "configuration_kind": "not_provisioned",
+    "warnings": ["PermissionError"],
+    "secret_values_logged": false
+  },
+  "official_score": null,
+  "official_submission_made": false,
+  "limitations": [
+    "Visible test examples come from train and are replaced at hidden evaluation; 400 conforming rows are not a correctness score.",
+    "The production algorithm retrieves from its trained structure catalog; it cannot recover genuinely absent molecular graphs.",
+    "The user-side CLI access token is not yet available to the runner service."
+  ]
+}
