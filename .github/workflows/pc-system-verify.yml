@@ -1,10 +1,7 @@
 name: ChemistryPC SYSTEM verification
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'runner/system-verify-trigger.txt'
+  workflow_dispatch:
 
 permissions:
   contents: read
