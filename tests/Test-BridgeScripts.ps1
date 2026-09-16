@@ -6,6 +6,7 @@ $files = @(
     (Join-Path $repoRoot 'bridge\sync.ps1'),
     (Join-Path $repoRoot 'bridge\uninstall.ps1'),
     (Join-Path $repoRoot 'runner\install.ps1'),
+    (Join-Path $repoRoot 'runner\enable-system.ps1'),
     (Join-Path $repoRoot 'runner\health.ps1'),
     (Join-Path $repoRoot 'runner\uninstall.ps1'),
     (Join-Path $repoRoot 'runner\diagnostics.ps1'),
