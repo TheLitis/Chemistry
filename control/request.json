@@ -1,8 +1,7 @@
 {
   "version": 1,
-  "id": "casmi-kaggle-diag-20260916-01",
-  "task": "script",
-  "script": "tasks/casmi_kaggle_diag.py",
+  "id": "casmi-kaggle-red-test-20260916-01",
+  "task": "tests",
   "arguments": [],
   "requireCuda": false
 }
