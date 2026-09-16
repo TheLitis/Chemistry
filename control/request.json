@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r06-architecture-prepare-20260916-01",
+  "id": "casmi-r06-screen-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_architecture_prepare.py",
-  "arguments": [],
+  "script": "tasks/casmi_architecture_research.py",
+  "arguments": ["--stage", "screen"],
   "requireCuda": true
 }
