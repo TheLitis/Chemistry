@@ -4,6 +4,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+pytest.importorskip('torch')
+
 
 def fixture(tmp_path, pooling='early'):
     from casmi26.architectures import make_model, save_model
