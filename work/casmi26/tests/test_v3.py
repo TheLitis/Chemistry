@@ -102,7 +102,7 @@ def fixture_v3(tmp_path):
     import pyarrow as pa
     import pyarrow.parquet as pq
     from casmi26.production import molecule_record,sha256
-    from casmi26.features_v3 import fingerprint_targets
+    from casmi26.features_v3 import fingerprint_targets, FEATURE_VERSION
     data=tmp_path/'data';data.mkdir();bundle=tmp_path/'bundle';bundle.mkdir()
     records=[molecule_record('CCO'),molecule_record('CC(=O)C')]
     records.sort(key=lambda r:r[3]);catalog=[list(r[:4]) for r in records]
@@ -118,7 +118,7 @@ def fixture_v3(tmp_path):
     (data/'sample_submission.csv').write_text('molecule_id,smiles\n001,\n000,\n')
     (bundle/'catalog.json').write_text(json.dumps(catalog));checkpoint(bundle/'model.npz')
     np.save(bundle/'targets.npy',np.stack([fingerprint_targets(r[0]) for r in catalog]))
-    manifest={'format':3,'feature_dim':8200,'head_sizes':[2048],'weights':[1.],
+    manifest={'format':3,'feature_version':FEATURE_VERSION,'feature_dim':8200,'head_sizes':[2048],'weights':[1.],
               'mode':'neural','train_sha256':sha256(data/'train.parquet'),
               'files':{n:sha256(bundle/n) for n in ('model.npz','targets.npy','catalog.json')}}
     (bundle/'v3-bundle.json').write_text(json.dumps(manifest))

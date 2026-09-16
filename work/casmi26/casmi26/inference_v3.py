@@ -38,13 +38,18 @@ def infer(test,train,bundle,output,template=None,*,routing=None):
     from .metric import require_official_rdkit
     require_official_rdkit()
     test,train,bundle,output=map(Path,(test,train,bundle,output));sidecar=output.with_suffix(output.suffix+'.report.json')
+    if test.resolve() == train.resolve():
+        raise ValueError('Reference/query input overlap: test and train must be distinct files')
     manifest=verify_bundle(bundle);mode=routing or manifest['mode']
     if mode not in ('neural','confidence','legacy'):raise ValueError('Unknown routing mode')
     forbidden={test.resolve(),train.resolve(),(bundle/'v3-bundle.json').resolve()}|{(bundle/n).resolve() for n in manifest['files']}
     if template:forbidden.add(Path(template).resolve())
     if output.resolve() in forbidden or sidecar.resolve() in forbidden or bundle.resolve() in output.resolve().parents:
         raise ValueError('Output would overwrite an input or model bundle')
-    if manifest['train_sha256']!=sha256(train):raise ValueError('Reference corpus changed')
+    train_hash, test_hash = sha256(train), sha256(test)
+    if train_hash == test_hash:
+        raise ValueError('Reference/query content overlap: copied training data cannot be the unknown test')
+    if manifest['train_sha256'] != train_hash:raise ValueError('Reference corpus changed')
     started=time.monotonic();groups=read_groups(test)
     catalog=json.loads((bundle/'catalog.json').read_text());masses=np.array([r[3] for r in catalog])
     packed=np.load(bundle/'targets.npy',mmap_mode='r',allow_pickle=False);model=MultiFingerprintModel(bundle/'model.npz')
@@ -98,7 +103,7 @@ def infer(test,train,bundle,output,template=None,*,routing=None):
     report={'status':'predictions_generated','model_format':3,'model_sha256':manifest['files']['model.npz'],
         'feature_dim':model.feature_dim,'head_sizes':list(model.head_sizes),'head_weights':manifest['weights'],
         'routing':mode,'prediction_count':len(predictions),'test_spectra':sum(map(len,groups.values())),
-        'test_sha256':sha256(test),'train_sha256':manifest['train_sha256'],'submission_sha256':sha256(output),
+        'test_sha256':test_hash,'train_sha256':manifest['train_sha256'],'submission_sha256':sha256(output),
         'reference_counts':reference_counts,'mass_incompatible_fallbacks':fallback,'details':details,
         'order_source':order_source,'seconds':time.monotonic()-started,'test_labels_used':False,'official_score':None,
         'limitations':['Catalog retrieval, not de novo generation.','Query feature moments still compress the raw spectrum.',

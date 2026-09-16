@@ -179,6 +179,13 @@ def verify_bundle(folder):
         raise ValueError('Incomplete/unsupported v3 bundle')
     if m.get('mode') not in ('neural','confidence','legacy'):
         raise ValueError('Unknown routing mode')
+    if m.get('feature_version') != FEATURE_VERSION:
+        raise ValueError('Bundle feature version differs from the inference transform')
+    if m['mode'] == 'confidence':
+        for name in ('gate_threshold', 'gate_margin'):
+            value = m.get(name)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not np.isfinite(value) or not 0 <= value <= 1:
+                raise ValueError('Invalid confidence configuration: ' + name)
     for name,h in m['files'].items():
         if sha256(folder/name)!=h:raise ValueError('Bundle hash mismatch: '+name)
     model=MultiFingerprintModel(folder/'model.npz')
