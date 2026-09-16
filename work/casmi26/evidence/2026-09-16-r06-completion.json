@@ -1,0 +1,94 @@
+{
+  "evidence_type": "completed_ChemistryPC_release_with_independent_artifact_verification",
+  "checked_utc": "2026-09-16T11:11:10.397816+00:00",
+  "execution_commit": "f13f7ec473bc18d21ccfdd7e5a2fd20f718dc84e",
+  "runner": "ChemistryPC",
+  "identity": "NT AUTHORITY\\SYSTEM",
+  "sid": "S-1-5-18",
+  "final_workflow_run_id": 35088767985,
+  "final_workflow_job_id": 104769806556,
+  "final_workflow_conclusion": "success",
+  "artifact_id": 10443306687,
+  "artifact_sha256": "2b77114e941f5938696715ae464b2f180225da5bdd0fcb2e7e058f21d8db003b",
+  "source_zip_sha256": "a7e5631feaade6ae62bdf8a161b5ad4bbd4b27c1ecf5f422f4d805ca387a8e43",
+  "source_zip_integrity_verified": true,
+  "tests": {"passed": 209, "failed": 0, "skipped": 0, "seconds": 15.65},
+  "selected_method": {
+    "architecture": "massset_hybrid",
+    "objective": "balanced fingerprint classification plus 0.3 same-mass candidate ranking loss",
+    "ensemble": "equal logits average of two separately initialized residual branches on a shared frozen V3 anchor",
+    "models": ["full-massset_hybrid+rank.npz", "replica-full.npz"],
+    "pooling": "early",
+    "fingerprint_head_weights": [0.5, 0.25, 0.25],
+    "mass_prior_sigma": "max(0.001 Da, observed neutral mass * 2e-6)",
+    "weights_kind": "unchanged_audited_holdout_models_not_full_refit",
+    "independent_audit_result": "work/casmi26/research/R06-completed-results.json"
+  },
+  "bundle_manifest_sha256": "7923285a3cb3d683f017255143bc18feb3caa78a4182a9680023e4c8c3d76699",
+  "selected_checkpoint_hashes": {
+    "anchor.npz": "83f6c57f12bcc183f2efe89177830fe0bcd79f4e77b2c61179771f6ae825fbe2",
+    "full-massset_hybrid+rank.npz": "29cc3184291a911523881e201043670c44b8a2a8e68a133e86044a99d3487f19",
+    "replica-full.npz": "3c11a19ea943a63bd10b6f7088d0c1533e58b33fb15da139ac0dbf1c9c3c7093"
+  },
+  "visible_example_inference": {
+    "device": "cpu",
+    "input_spectra": 1213,
+    "output_rows": 400,
+    "all_guesses_valid_and_distinct_per_row": true,
+    "empty_candidate_rows": [],
+    "test_labels_used": false,
+    "budget_three": {
+      "spectra_used": 993,
+      "sha256": "eb1931d029a638b2eb80ec382e391ccb6056d7a89e20b758a1b41a1cbff0cca3",
+      "prediction_loop_seconds": 5.516542200013646
+    },
+    "budget_all": {
+      "spectra_used": 1213,
+      "sha256": "750e3410dbb73e1cdf7dcb5b0b6a7e36c142ef05cd6eef8618b2fd016508cffe",
+      "prediction_loop_seconds": 5.146013099991251
+    },
+    "timing_excludes_model_and_catalog_loading": true,
+    "both_csv_hashes_reverified_after_download": true,
+    "archive_fix_did_not_change_either_prediction_file": true
+  },
+  "release": {
+    "directory": "C:\\ProgramData\\ChemistryRunner\\artifacts\\casmi26\\research-r06\\release",
+    "bundle": "bundle",
+    "archive": "r06-research-candidate.zip",
+    "archive_bytes": 200067083,
+    "archive_sha256": "cd09b1eb9a18d29f000882cb9637224ac3b1b9bf571b85f1475b38cacd2753ea",
+    "source_entrypoint": "predict_r06.py",
+    "offline_wheels_included": false,
+    "requires_existing_CASMI_Python_environment": true
+  },
+  "reconciled_failure": {
+    "original_research_run": 35086289470,
+    "original_release_run": 35087391690,
+    "failure_stage": "final_git_source_archive_only",
+    "cause": "checkout retained NETWORK SERVICE ownership while current execution identity became SYSTEM",
+    "research_completed_before_failure": true,
+    "models_and_raw_audit_results_preserved": true,
+    "recovery": "git -c safe.directory=<exact authorized checkout> archive, scoped to one command",
+    "global_git_configuration_changed": false,
+    "acl_or_service_configuration_changed": false,
+    "retraining_needed_for_recovery": false
+  },
+  "latest_kaggle_history": [
+    {"ref": 56269464, "version": "confidence-v2", "status": "COMPLETE", "public_score": 0.112},
+    {"ref": 56268669, "version": "baseline-v1", "status": "COMPLETE", "public_score": 0.147}
+  ],
+  "live_limits": {"numToday": 2, "numTotal": 2, "numAllowedNow": 3},
+  "internal_rolling_24h_cap": 2,
+  "new_submissions_this_continuation": 0,
+  "new_kaggle_uploads_this_continuation": 0,
+  "official_score_for_r06": null,
+  "original_official_champion_unchanged": true,
+  "limitations": [
+    "Known-catalog retrieval; no de novo generator or external catalog expansion in this release.",
+    "The exported checkpoints are the audited holdout-trained models, not a full-corpus refit.",
+    "The primary independent audit uses at most three acquisitions; all-acquisition results are separately labeled diagnostics.",
+    "All-acquisition deployment uses deduplicated inputs and median mass; all-budget audit used cached means and may include duplicate observations.",
+    "The vector branch consumes all selected acquisitions; the early-fusion raw-peak branch retains top 32 peaks from at most three hashed acquisitions.",
+    "No new Kaggle/Linux notebook run or hidden competition score was obtained."
+  ]
+}
