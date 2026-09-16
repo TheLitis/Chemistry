@@ -15,6 +15,14 @@ def load():
     return module
 
 
+def load_confirm():
+    path=Path(__file__).resolve().parents[3]/'tasks/casmi_r06_confirm_scoring_error.py'
+    assert path.exists(), 'R06 scoring-error confirm task is not implemented'
+    spec=importlib.util.spec_from_file_location('r06_confirm',path)
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module
+
+
 def test_v3_notebook_embeds_current_inference_source_not_old_dataset_code(tmp_path):
     m=load();path=m.build_notebook(tmp_path/'r06-v3.ipynb');book=json.loads(path.read_text())
     cells=[''.join(c.get('source',[])) for c in book['cells'] if c['cell_type']=='code']
@@ -57,7 +65,7 @@ def test_v3_submission_gate_requires_known_scoring_error_and_verified_kernel_out
 
 
 def test_server_error_confirmation_requires_the_exact_old_ref_and_format_failure():
-    m=load()
+    m=load_confirm()
     text='Your notebook generated a submission file with incorrect format. Some examples causing this are: wrong number of rows or columns, empty values, an incorrect data type for a value, or invalid submission values from what is expected.'
     assert m.confirm_scoring_error({'ref':56278642,'error_description':text})==text
     assert m.confirm_scoring_error({'ref':56278642,'error_description':''}) is None
