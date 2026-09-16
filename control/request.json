@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-progress-20260916-01",
+  "id": "casmi-full-public-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_progress.py",
+  "script": "tasks/casmi_full_run.py",
   "arguments": [],
   "requireCuda": false
 }

@@ -15,11 +15,18 @@ from .chemistry import info
 from .engine import atomic_text, digest
 from .learning import FP_BITS, FingerprintRanker, fingerprint, group_features, train_arrays
 from .metric import structure_key, require_official_rdkit
-from .spectra import records, from_row
+from .spectra import records, from_row, value
 
 
 def prepare_examples(path: Path, *, max_molecules: int = 30000) -> tuple[dict,dict]:
     if max_molecules < 2:raise ValueError('Need room for at least two molecules')
+    # Choose a stable molecule sample before accumulating any spectra. Input
+    # files are commonly ordered by molecule; a prefix is not representative.
+    universe=set()
+    for item in records(path):
+        key=structure_key(value(item,'smiles',required=False))
+        if key is not None:universe.add(key)
+    selected=set(sorted(universe,key=lambda k:hashlib.sha256(('sample-v1:'+k).encode()).digest())[:max_molecules])
     groups={};counts=Counter();rejections=Counter()
     for row in records(path):
         counts['seen_spectra']+=1
@@ -28,7 +35,7 @@ def prepare_examples(path: Path, *, max_molecules: int = 30000) -> tuple[dict,di
             if key is None:raise ValueError('No valid InChI')
             if abs(s.neutral-m.mass)>max(.003,m.mass*50e-6):
                 rejections['precursor_mass_inconsistent']+=1;continue
-            if key not in groups and len(groups)>=max_molecules:
+            if key not in selected:
                 rejections['molecule_limit']+=1;continue
             x=group_features([s])
         except (ValueError,TypeError,KeyError):
@@ -41,7 +48,9 @@ def prepare_examples(path: Path, *, max_molecules: int = 30000) -> tuple[dict,di
     for record in groups.values():
         record['features']=record.pop('feature_sum')/record['spectra_count']
         record['observed_mass']=record.pop('neutral_sum')/record['spectra_count']
-    return groups,{**counts,'molecules':len(groups),'rejected':dict(rejections)}
+    return groups,{**counts,'molecules':len(groups),'source_structure_keys':len(universe),
+                   'sampling':'lowest stable SHA256(sample-v1:tautomer-key), all available spectra retained',
+                   'rejected':dict(rejections)}
 
 
 def summarize_ranks(ranks: list[int | None]) -> dict:
@@ -55,7 +64,6 @@ def train_and_validate(path: Path, output: Path, *, epochs=30, hidden=384,
                        batch_size=128, device='cuda', max_molecules=30000, seed=1729) -> dict:
     examples,counts=prepare_examples(path,max_molecules=max_molecules)
     keys=sorted(examples)
-    # This split is fixed before training and groups tautomer/stereo equivalents.
     val_keys=[k for k in keys if int.from_bytes(hashlib.sha256(k.encode()).digest()[:8],'big')%5==0]
     val_set=set(val_keys)
     train_keys=[k for k in keys if k not in val_set]
@@ -78,7 +86,9 @@ def train_and_validate(path: Path, output: Path, *, epochs=30, hidden=384,
             ranking=sorted(range(len(ck)),key=lambda i:(-float(sim[i]),ck[i]))
             predicted=[ck[i] for i in ranking]
             rank=predicted.index(key)+1 if key in predicted else None
-            base=sorted(ck).index(key)+1 if key in ck else None
+            mass_rank=sorted(range(len(ck)),key=lambda i:(abs(float(masses[left+i])-mass),ck[i]))
+            baseline_keys=[ck[i] for i in mass_rank]
+            base=baseline_keys.index(key)+1 if key in baseline_keys else None
         else:
             rank=base=None;no_candidate+=1
         ranks.append(rank);baseline.append(base)
@@ -90,6 +100,7 @@ def train_and_validate(path: Path, output: Path, *, epochs=30, hidden=384,
             'de_novo_evaluation':False,'official_massspecgym_benchmark':False,'official_casmi_evaluation':False,
             'counts':counts,'optimization':trained,'validation':summarize_ranks(ranks),
             'mass_only_baseline':summarize_ranks(baseline),
+            'mass_only_ranking':'absolute precursor-neutral mass error; InChIKey14 tie break',
             'ambiguous_mass_validation':summarize_ranks(ambiguous),
             'ambiguous_mass_baseline':summarize_ranks(ambiguous_baseline),
             'no_mass_candidate':no_candidate,'training_validation_key_overlap':len(set(train_keys)&set(val_keys)),
@@ -98,8 +109,6 @@ def train_and_validate(path: Path, output: Path, *, epochs=30, hidden=384,
                           'The true structure is in the evaluation catalog by construction.',
                           'This ranker cannot generate a missing molecular graph.']}
     atomic_text(Path(output).with_suffix('.validation.json'),json.dumps(report,indent=2,allow_nan=False)+'\n')
-    # Catalog used for this external experiment only; never mislabel as an
-    # independently acquired PubChem/COCONUT database.
     import csv
     with Path(output).with_suffix('.catalog.csv').open('w',encoding='utf-8',newline='') as f:
         writer=csv.writer(f);writer.writerow(['smiles']);writer.writerows([examples[k]['smiles']] for k in keys)

@@ -18,3 +18,13 @@ def test_catalog_evaluation_includes_failures_in_denominator():
     assert r['mrr_at_25']==(1+.5+0+.25)/4
     assert r['top1_accuracy']==.25
     assert r['recall_at_25']==.75
+
+
+def test_molecule_sampling_is_independent_of_input_order(tmp_path):
+    from casmi26.training import prepare_examples
+    from casmi26.chemistry import info, PROTON
+    structures=['CCO','COC','CCN','CCC','CCCO','CC(C)O','CCCN','CCCC']
+    rows=[row(str(i),[(20,1)],s,precursor=info(s).mass+PROTON) for i,s in enumerate(structures)]
+    a,_=prepare_examples(write_jsonl(tmp_path/'a.jsonl',rows),max_molecules=3)
+    b,_=prepare_examples(write_jsonl(tmp_path/'b.jsonl',list(reversed(rows))),max_molecules=3)
+    assert set(a)==set(b)

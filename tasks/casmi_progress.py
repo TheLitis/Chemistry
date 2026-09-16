@@ -16,22 +16,22 @@ import shutil
 import urllib.request
 
 SOURCE = 'https://huggingface.co/datasets/roman-bushuiev/MassSpecGym/resolve/965c90b8d674c990e14535e09f0dc6e4e7ca9d85/data/MassSpecGym.tsv'
-MAX_ROWS = 30000
-MAX_BYTES = 100*1024*1024
+MAX_ROWS = 300000
+MAX_BYTES = 1024*1024*1024
 
 
 def public_subset(folder: Path) -> tuple[Path,dict]:
     folder.mkdir(parents=True,exist_ok=True)
-    raw=folder/'MassSpecGym-prefix.tsv'
-    # Always record a bounded, complete-line prefix, not a supposed full dataset.
+    raw=folder/'MassSpecGym.tsv'
+    # Require the complete pinned TSV; resource limits fail rather than truncate.
     if not raw.exists():
         temporary=raw.with_suffix('.part');count=0;size=0
         request=urllib.request.Request(SOURCE,headers={'User-Agent':'Chemistry-CASMI26-public-benchmark/0.2'})
         with urllib.request.urlopen(request,timeout=90) as response,temporary.open('wb') as f:
             for line in response:
-                if size+len(line)>MAX_BYTES:break
+                if size+len(line)>MAX_BYTES:raise RuntimeError('Public corpus exceeds the 1 GiB download budget')
                 f.write(line);size+=len(line);count+=1
-                if count>=MAX_ROWS+1:break
+                if count>MAX_ROWS+1:raise RuntimeError('Public corpus exceeds the row limit')
         if count<101:raise RuntimeError('Public corpus returned too few complete TSV rows')
         os.replace(temporary,raw)
     path=folder/'public-spectra.jsonl';rows=0
@@ -50,11 +50,25 @@ def public_subset(folder: Path) -> tuple[Path,dict]:
                   'instrument_type':record.get('instrument_type')}
             out.write(json.dumps(item,allow_nan=False)+'\n');rows+=1
     evidence={'url':SOURCE,'license':'MIT (publisher dataset card)',
-              'scope':'bounded first-row subset, not the full corpus or official benchmark split',
+              'scope':'complete pinned TSV; custom molecule hash holdout, not the official benchmark split',
               'rows':rows,'raw_bytes':raw.stat().st_size,
               'prefix_sha256':hashlib.sha256(raw.read_bytes()).hexdigest()}
     (folder/'source.json').write_text(json.dumps(evidence,indent=2),encoding='utf-8')
     return path,evidence
+
+
+def deliver_artifacts(artifact: Path, visible: Path) -> dict:
+    """A user-folder mirror is optional; never discard completed science on ACL denial."""
+    result={'artifact_directory':str(artifact),'mirror_copy_ok':False}
+    try:
+        visible.mkdir(parents=True,exist_ok=True)
+        for path in artifact.iterdir():
+            if path.is_file() and path.suffix in ('.npz','.csv','.json','.ipynb','.zip'):
+                shutil.copy2(path,visible/path.name)
+        result.update(mirror_copy_ok=True,user_artifact_directory=str(visible))
+    except OSError as exc:
+        result['mirror_warning']=type(exc).__name__+': '+str(exc)
+    return result
 
 
 def main() -> int:
@@ -64,16 +78,16 @@ def main() -> int:
     state=Path(os.environ['CHEMISTRY_STATE_ROOT']);out=Path(os.environ['CHEMISTRY_REQUEST_OUTPUT'])
     out.mkdir(parents=True,exist_ok=True)
     env=prepare.kaggle_environment(state,os.environ);env['PYTHONUTF8']='1';env['PYTHONIOENCODING']='utf-8'
+    env['OPENBLAS_NUM_THREADS']='8';env['OMP_NUM_THREADS']='8'
     python=state/'envs/casmi26/python.exe'
     if not python.exists():raise RuntimeError('Run the existing CASMI environment preparation first')
     site=python.parent/'Lib/site-packages'
     report={'request_id':os.environ.get('CHEMISTRY_REQUEST_ID'),'official_score':None,
-            'official_submission':False,'status':'running','python':str(python)}
+            'official_submission':False,'status':'running','python':str(python),'git_sha':os.environ.get('GITHUB_SHA')}
     def execute(args,label,timeout=900):
         result=prepare.run([str(python)]+args,env=env,timeout=timeout,log=out/(label+'.log'))
         if result['exit_code']!=0:raise RuntimeError(label+' failed, exit='+str(result['exit_code']))
         return result
-    # Update the isolated scientific runtime only, never the user's base Python/Torch.
     execute(['-m','pip','install','--disable-pip-version-check','--target',str(site),
              '--upgrade','--no-deps','rdkit==2026.3.3'],'rdkit-install')
     execute(['-c','import rdkit, numpy, pyarrow, torch; print(rdkit.__version__, numpy.__version__, pyarrow.__version__, torch.__version__); print("CUDA", torch.cuda.is_available())'],'versions',120)
@@ -84,13 +98,13 @@ def main() -> int:
                        env=env,timeout=60,log=out/'access.log',expose=False)
     report['kaggle_files_exit_code']=access['exit_code']
     report['tests_passed']=True
-    artifact=state/'artifacts/casmi26/public-v02';artifact.mkdir(parents=True,exist_ok=True)
+    artifact=state/'artifacts/casmi26/public-v03';artifact.mkdir(parents=True,exist_ok=True)
     try:
-        data,provenance=public_subset(state/'data/external/massspecgym-prefix-v1')
+        data,provenance=public_subset(state/'data/external/massspecgym-complete-v1')
         report['public_data']=provenance
         model=artifact/'fingerprint-public.npz'
         execute([str(repo/'train.py'),'--train',str(data),'--output',str(model),
-                 '--epochs','30','--hidden','384','--max-molecules','10000','--device','cuda'],
+                 '--epochs','50','--hidden','768','--max-molecules','50000','--device','cuda'],
                 'public-training',1800)
         validation=json.loads(model.with_suffix('.validation.json').read_text(encoding='utf-8'))
         report['validation']={k:v for k,v in validation.items() if k not in ('molecules',)}
@@ -103,17 +117,14 @@ def main() -> int:
     notebook=artifact/'casmi26-submission.ipynb'
     execute(['-c',f'import sys; sys.path.insert(0,{str(repo/"work/casmi26")!r}); from pathlib import Path; from casmi26.notebook import build_notebook; build_notebook(Path({str(notebook)!r}))'],'build-notebook',120)
     shutil.copy2(notebook,out/notebook.name)
-    visible=Path(r'C:\Users\loval\Chemistry\artifacts\casmi26\public-v02')
-    visible.mkdir(parents=True,exist_ok=True)
-    for path in artifact.iterdir():
-        if path.is_file() and path.suffix in ('.npz','.csv','.json','.ipynb'):
-            shutil.copy2(path,visible/path.name)
-    report['user_artifact_directory']=str(visible)
+    report.update(deliver_artifacts(artifact,Path(r'C:\Users\loval\Chemistry\artifacts\casmi26\public-v03')))
     if 'public_benchmark_error' not in report:
         report['status']='external_baseline_completed_no_official_score'
     text=json.dumps(report,indent=2,ensure_ascii=True,allow_nan=False)
     (out/'progress-report.json').write_text(text+'\n',encoding='utf-8')
-    (visible/'progress-report.json').write_text(text+'\n',encoding='utf-8')
+    (artifact/'progress-report.json').write_text(text+'\n',encoding='utf-8')
+    if report['mirror_copy_ok']:
+        (Path(report['user_artifact_directory'])/'progress-report.json').write_text(text+'\n',encoding='utf-8')
     print('CASMI_PROGRESS_REPORT_BEGIN\n'+text+'\nCASMI_PROGRESS_REPORT_END',flush=True)
     return 0
 
