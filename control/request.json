@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-kaggle-final-verify-20260916-01",
+  "id": "casmi-research-r01-20260916-01",
   "task": "script",
-  "script": "tasks/casmi_kaggle_verify.py",
+  "script": "tasks/casmi_rank_research.py",
   "arguments": [],
   "requireCuda": false
 }
