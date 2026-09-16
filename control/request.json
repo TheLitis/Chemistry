@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "id": "casmi-first-submit-20260916-01",
+  "id": "casmi-first-submit-20260916-02",
   "task": "script",
   "script": "tasks/casmi_kaggle_publish.py",
   "arguments": ["--stage", "submit"],
