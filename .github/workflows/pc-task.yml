@@ -18,6 +18,8 @@ jobs:
   task:
     runs-on: [self-hosted, Windows, X64, ChemistryPC]
     timeout-minutes: 240
+    env:
+      AIMO_RUNNER_TOKEN: ${{ secrets.AIMO_RUNNER_TOKEN }}
     defaults:
       run:
         shell: powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ". '{0}'"
