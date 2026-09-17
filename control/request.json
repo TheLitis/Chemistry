@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r08-certified-acceptance-20260917-01",
+  "id": "casmi-r08b-confirmation-20260917-01",
   "task": "script",
-  "script": "tasks/casmi_r08_certified_acceptance.py",
+  "script": "tasks/casmi_r08b_confirmation.py",
   "arguments": [],
   "requireCuda": false
 }
