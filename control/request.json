@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r07-submit-readiness-20260917-01",
+  "id": "casmi-r08-preflight-20260917-01",
   "task": "script",
-  "script": "tasks/casmi_r07_submission.py",
-  "arguments": ["--stage", "check"],
+  "script": "tasks/casmi_r08_preflight.py",
+  "arguments": [],
   "requireCuda": false
 }
