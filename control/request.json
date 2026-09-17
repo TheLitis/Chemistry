@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r07-final-candidate-20260917-01",
+  "id": "casmi-r07-private-preview-20260917-01",
   "task": "script",
-  "script": "tasks/casmi_r07_candidate.py",
-  "arguments": [],
+  "script": "tasks/casmi_r07_shadow.py",
+  "arguments": ["--stage", "publish"],
   "requireCuda": false
 }
