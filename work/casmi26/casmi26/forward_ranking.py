@@ -97,3 +97,34 @@ def pool_forward_scores(queries,predictions):
                        **{k+'_max':max(c[k] for c in comps) for k in ('cosine','entropy','coverage')}})
     return {'supported_spectra':counts,'total_spectra':len(queries),
             'features':{k:float(np.mean([v[k] for v in values])) for k in values[0]} if values else {}}
+
+
+def rerank_case(case,features,feature,weight,limit=32):
+    scores=np.asarray(case['scores'],dtype='f8')
+    allowed=set(candidate_frontier({'case':case},limit))
+    evidence=np.array([features.get(key,{}).get(feature,np.nan) if key in allowed else np.nan for key in case['keys']])
+    return add_forward_evidence(scores,evidence,weight)
+
+
+def evaluate_configuration(records,features,feature,weight,limit=32):
+    from .target_domain import rank_key,metrics
+    rows=[]
+    for r in records:
+        ranks={case:rank_key(rerank_case(data,features.get(r['key'],{}),feature,weight,limit),data['keys'],r['key'])
+               for case,data in r['cases'].items()}
+        rows.append({'key':r['key'],'ranks':ranks})
+    return {'metrics':{case:metrics([r['ranks'][case] for r in rows]) for case in records[0]['cases']},'rows':rows}
+
+
+def choose_configuration(calibration,features,names,weights,limit=32):
+    if not calibration or not names or 0. not in weights:raise ValueError('Calibration and a no-change option are required')
+    baseline=evaluate_configuration(calibration,features,names[0],0.,limit)['metrics']
+    grid=[]
+    for feature in names:
+        for weight in weights:
+            if weight==0 and grid:continue
+            result=evaluate_configuration(calibration,features,feature,weight,limit)['metrics']
+            gains={case:result[case]['mrr_at_25']-baseline[case]['mrr_at_25'] for case in baseline}
+            grid.append({'feature':feature,'weight':weight,'metrics':result,'gains':gains})
+    selected=max(grid,key=lambda v:(min(v['gains'].values()),np.mean(list(v['gains'].values())),-v['weight']))
+    return {'selected':selected,'baseline':baseline,'grid':grid,'selected_only_on_calibration':True}
