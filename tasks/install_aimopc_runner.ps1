@@ -36,8 +36,6 @@ try {
     if ([string]::IsNullOrWhiteSpace($serviceName)) { throw 'Runner service name was not created.' }
     & sc.exe config $serviceName obj= LocalSystem password= '""'
     if ($LASTEXITCODE -ne 0) { throw "Unable to configure $serviceName as LocalSystem." }
-    & sc.exe config $serviceName 'start= auto'
-    if ($LASTEXITCODE -ne 0) { throw "Unable to configure automatic startup for $serviceName." }
     Restart-Service -Name $serviceName
     $service = Get-CimInstance Win32_Service -Filter "Name='$serviceName'"
     if ($service.State -ne 'Running' -or $service.StartName -notin @('LocalSystem', 'NT AUTHORITY\SYSTEM')) {
