@@ -1,4 +1,4 @@
-"""One repository-root entry point for legacy, V1/V2, and V3 inference."""
+"""One repository-root entry point for legacy, V1/V2, V3, and R07 inference."""
 from __future__ import annotations
 
 import argparse
@@ -17,12 +17,14 @@ def main(argv: list[str] | None = None) -> int:
     arguments = [value for value in arguments if value != '--production']
     if options.bundle is not None:
         folder = options.bundle
-        manifests = [name for name in ('bundle.json', 'v3-bundle.json') if (folder / name).is_file()]
+        manifests = [name for name in ('bundle.json', 'v3-bundle.json', 'r07-bundle.json') if (folder / name).is_file()]
         if len(manifests) > 1:
-            parser.error('Ambiguous model bundle: V1/V2 and V3 manifests coexist; select one versioned folder')
+            parser.error('Ambiguous model bundle: multiple version manifests coexist; select one versioned folder')
         if not manifests:
-            parser.error('Missing model manifest: expected bundle.json or v3-bundle.json in ' + str(folder))
-        if manifests[0] == 'v3-bundle.json':
+            parser.error('Missing model manifest: expected bundle.json, v3-bundle.json or r07-bundle.json in ' + str(folder))
+        if manifests[0] == 'r07-bundle.json':
+            from casmi26.r07_release import main as predict_main
+        elif manifests[0] == 'v3-bundle.json':
             from casmi26.inference_v3 import main as predict_main
         else:
             from casmi26.portable import main as predict_main
