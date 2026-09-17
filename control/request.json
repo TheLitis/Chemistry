@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "aimopc-bootstrap-20260917-01",
+  "id": "casmi-r07-submit-readiness-20260917-01",
   "task": "script",
-  "script": "tasks/install_aimopc_runner.ps1",
-  "arguments": [],
+  "script": "tasks/casmi_r07_submission.py",
+  "arguments": ["--stage", "check"],
   "requireCuda": false
 }
