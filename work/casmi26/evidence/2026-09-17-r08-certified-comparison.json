@@ -1,0 +1,69 @@
+{
+  "evidence_type": "completed_PC_experiment_and_independent_certificate_acceptance",
+  "experiment": "R08-exact-screen-v1",
+  "experiment_run_id": 35252787195,
+  "experiment_artifact_id": 10513381746,
+  "experiment_artifact_sha256": "0fbbaf0a6d14211f26bb7489394064c596d63cfd1eb628352e4b6747b4d8055a",
+  "acceptance_run_id": 35260521781,
+  "acceptance_artifact_id": 10514477492,
+  "acceptance_artifact_sha256": "13cf62a39819eb8abbd1f9269528a19469ba649276d57df3a74595e681393b1a",
+  "acceptance_commit": "69a30b6f6c63e45f31407e99c42fb7f667e1219a",
+  "tests": {"passed": 358, "failed": 0, "skipped": 0, "warnings": 223, "seconds": 27.33},
+  "fixed_score": {"base": "full independent R07 spectral/neural/mass/external recipe", "forward_feature": "cosine_nearest", "forward_weight": 0.25, "parameter_reselection": false},
+  "numerical_screening": {
+    "queries": 378,
+    "query_regime_certificates": 1134,
+    "candidate_pairs_across_regimes": 459852,
+    "evaluated_pairs_across_regimes": 77025,
+    "proven_unnecessary_evaluations": 382827,
+    "new_graph_calls_in_experiment": 13736,
+    "new_spectra_in_experiment": 75956,
+    "prediction_failures": 9,
+    "seconds": 2361.421985199995,
+    "all_three_rankings_and_paired_intervals_recomputed": true,
+    "verification_imports_production_ranker": false,
+    "certifies_chemical_correctness": false,
+    "proof": "Unknown candidate upper bound base+0.25 is strictly below the known top25 cutoff; conservative floating-point tie handling."
+  },
+  "reused_natural_product_diagnostic_170": {
+    "available_references": {"r07_mrr": 0.9359082420847127, "forward_mrr": 0.9288587556234614, "delta_ci95": [-0.0207749766573296, 0.005695611577964519]},
+    "absent_references": {"r07_mrr": 0.27534182335229307, "forward_mrr": 0.35919385317085706, "delta_ci95": [0.05453105768287919, 0.1176218279066227]},
+    "external_recovery": {"r07_mrr": 0.13116116954861382, "forward_mrr": 0.15924270987920597, "delta_ci95": [0.01720752137270803, 0.04042463247434603]}
+  },
+  "reused_transfer_diagnostic_128": {
+    "available_and_absent_rankings_identical": true,
+    "r07_mrr": 0.0636806785477062,
+    "forward_capped32_mrr": 0.16449154246488806,
+    "forward_exact_mrr": 0.18890954017441536,
+    "exact_minus_r07_ci95": [0.09032723300329998, 0.1653914207198299],
+    "external_recovery_coverage": 0,
+    "external_recovery_mrr_both": 0
+  },
+  "original_R08_promotion_gate": {
+    "eligible": false,
+    "failed_condition": "fresh external-recovery improvement (no correct structures covered in that cohort)",
+    "relaxed": false
+  },
+  "latest_read_only_Kaggle_observation": {
+    "checked_utc": "2026-09-17T18:43:58Z",
+    "r07_submission_ref": 56292572,
+    "status": "COMPLETE",
+    "error_description": "",
+    "public_score": 0.188,
+    "earlier_v1_public_score": 0.147,
+    "numToday": 1,
+    "numTotal": 5,
+    "numAllowedNow": 4
+  },
+  "r07_champion_unchanged": true,
+  "new_submissions_in_this_continuation": 0,
+  "new_training_in_this_continuation": false,
+  "limitations": [
+    "Exact screening reuses spent cohorts and is an exploratory diagnostic, not an untouched holdout.",
+    "FIORA pretraining membership is not fully known; no full-system de novo generalization claim is made.",
+    "Forward evidence is bounded for numerical screening, not a calibrated probability of chemical correctness.",
+    "The available-reference diagnostic has a small regression; the original candidate gate remains failed.",
+    "R08B is a separate prospectively fixed experiment on new keys, not a relabeling of this gate as passed.",
+    "Local transfer MRR 0.1889095 is unrelated to the official R07 public score 0.188."
+  ]
+}
