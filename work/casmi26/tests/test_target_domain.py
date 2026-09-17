@@ -68,6 +68,7 @@ def test_hybrid_zero_spectral_evidence_does_not_demote_unreferenced_truth():
 
 def test_full_domain_runner_with_isolated_synthetic_corpus(tmp_path):
     """Software integration only: the fabricated tiny corpus is not an accuracy test."""
+    pytest.importorskip('torch', reason='Training integration requires optional PyTorch; inference remains NumPy-only')
     import importlib.util
     import json
     from pathlib import Path
