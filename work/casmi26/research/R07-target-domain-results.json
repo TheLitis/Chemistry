@@ -1,0 +1,93 @@
+{
+  "evidence_type": "completed_local_package_study_reconciled_on_ChemistryPC",
+  "experiment": "R07-domain-full-system",
+  "study_created_by_current_continuation": false,
+  "study_source": "local-package:768a553c50bd3ac5ce16300001073fcf5204880bfcf0f14bdbb891fe4c64bb2d",
+  "study_report_sha256": "3775a0fb2d78766149d7cbc89a4b603e69840befdcae7de11e5d19c39d97408e",
+  "reconciliation_run_id": 35168254269,
+  "reconciliation_job_id": 105034111074,
+  "reconciliation_artifact_id": 10476081256,
+  "reconciliation_archive_sha256": "48a0b61d8217570f5f83c8c4cf9b5e5ee6772bd3a3f57cded295410fe75d7bc3",
+  "protocol": {
+    "target_molecules": 250,
+    "target_spectra": 1184,
+    "instrument": "timsTOF",
+    "source": "enveda-np-examples",
+    "calibration_molecules": 80,
+    "audit_molecules": 170,
+    "previously_examined_target_keys_forced_into_calibration": 22,
+    "all_250_target_keys_excluded_from_fitting_in_all_sources": true,
+    "training_target_overlap": 0,
+    "training_unique_molecules": 245319,
+    "warmstart": null,
+    "selection_locked_before_audit": true,
+    "baseline": "complete V1 spectral plus neural recipe independently retrained from scratch",
+    "criterion": "maximize minimum calibration MRR gain across the three regimes, then mean gain",
+    "selection_grid_size": 108
+  },
+  "training": {
+    "v1_independent": {"epochs": 30, "seed": 1729, "learning_rate": 0.002, "parameters": 3152384, "seconds": 167.48202640001546, "device": "cuda"},
+    "v3_independent": {"epochs": 30, "seed": 26091701, "learning_rate": 0.001, "parameters": 11553280, "seconds": 515.6776189999946, "device": "cuda", "amp": true}
+  },
+  "selected": {
+    "kind": "v1_tanimoto",
+    "spectral_weight": 1.0,
+    "mass_weight": 0.5,
+    "external_penalty": 0.2,
+    "mass_offset_ppm": 1.4060715323698454,
+    "mass_scale_ppm": 5.0,
+    "mass_penalty": "Student-t, 3 degrees of freedom, floor 0.001 Da"
+  },
+  "audit": {
+    "available_references": {
+      "baseline": {"mrr_at_25": 0.9292013215542628, "top1": 0.888235294117647, "recall_at_25": 1.0},
+      "selected": {"mrr_at_25": 0.9359082420847127, "top1": 0.9, "recall_at_25": 1.0},
+      "delta_mrr": 0.006706920530449942,
+      "paired_ci95": [-0.004774509803921569, 0.01879404908816672],
+      "statistically_confirmed_positive_gain": false
+    },
+    "absent_references_structure_in_catalog": {
+      "baseline": {"mrr_at_25": 0.14720452369955905, "top1": 0.029411764705882353, "recall_at_25": 0.6352941176470588},
+      "selected": {"mrr_at_25": 0.275341823352293, "top1": 0.10588235294117647, "recall_at_25": 0.8705882352941177},
+      "delta_mrr": 0.12813729965273402,
+      "paired_ci95": [0.09886855300921231, 0.16236527586017313]
+    },
+    "external_recovery_after_original_catalog_excision": {
+      "baseline": {"mrr_at_25": 0.0, "top1": 0.0, "recall_at_25": 0.0},
+      "selected": {"mrr_at_25": 0.13116116954861384, "top1": 0.047058823529411764, "recall_at_25": 0.6411764705882353},
+      "delta_mrr": 0.13116116954861384,
+      "paired_ci95": [0.10076152569261018, 0.16602263425934982],
+      "true_candidate_coverage": 0.9941176470588236
+    }
+  },
+  "verification": {
+    "raw_audit_rows": 170,
+    "raw_ranks_sha256": "1109a41e8ee1abc24dc7e8624e49b8c05f9a1274da0e3e5ed594105bb40af78a",
+    "all_metrics_and_intervals_independently_recomputed": true,
+    "tolerance": 1e-12,
+    "bootstrap_unit": "molecule",
+    "bootstrap_repeats": 2000,
+    "bootstrap_seed": 26091603,
+    "original_sealed_protocol_and_models_preserved": true
+  },
+  "external_snapshot": {
+    "name": "COCONUT",
+    "release": "2026-08",
+    "sha256": "6e042af898b2fd3af3f52dc24536f15a26faac26dc0e27f0e5b072172a445b0d",
+    "mass_selected_rows": 64169,
+    "mass_selected_unique_keys": 40271,
+    "counts_are_not_the_total_database_size": true
+  },
+  "official_score": null,
+  "test_data_read": false,
+  "new_submissions": 0,
+  "limitations": [
+    "250 common natural products are not the hidden test or a genuinely novel structure benchmark.",
+    "Other-source reference availability is manipulated by regime; hidden mixture proportions remain unknown.",
+    "External recovery is retrieval from actual public records, not molecular generation.",
+    "The available-reference difference is small and its interval includes zero.",
+    "Final full-data refit weights must be evaluated separately from these holdout checkpoints.",
+    "The measured gain combines candidate expansion and score changes, not an isolated neural architecture effect.",
+    "No predicted hidden score or claim of near-unit accuracy follows from this audit."
+  ]
+}
