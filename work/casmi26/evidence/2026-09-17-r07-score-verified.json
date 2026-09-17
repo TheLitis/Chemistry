@@ -1,0 +1,29 @@
+{
+  "evidence_type": "read_only_Kaggle_account_snapshot",
+  "checked_utc": "2026-09-17T17:15:55.422060+00:00",
+  "workflow_run_id": 35251542947,
+  "workflow_job_id": 105304834470,
+  "artifact_id": 10509633875,
+  "artifact_sha256": "f16151f94a55765752e638855a782f252526657262d0b9cbbebdeb6f80dbc2d2",
+  "execution_commit": "7110d286757de8c4e22ce79888688242e4e76944",
+  "submission": {
+    "ref": 56292572,
+    "date_utc": "2026-09-17T02:49:12.663000",
+    "status": "SubmissionStatus.COMPLETE",
+    "public_score": 0.188,
+    "error_description": "",
+    "description": "",
+    "notebook_identity_reported_by_user": "thelindortis/casmi26-r07-timstof-hybrid",
+    "notebook_version_reported_by_user": 1,
+    "script_version_id_reported_by_user": 350438686,
+    "api_snapshot_does_not_include_notebook_version": true
+  },
+  "previous_best": {"ref": 56268669, "public_score": 0.147},
+  "limits_at_snapshot": {"numToday": 1, "numTotal": 5, "numAllowedNow": 4},
+  "r07_model_unchanged": true,
+  "r07_model_sha256": "4a05a97b65276df6558e4c156f2129b5463b758f4ea730b0f1f93e99acf055a6",
+  "new_submissions": 0,
+  "new_uploads": 0,
+  "private_final_score": null,
+  "scope": "Confirms the numerical public score, not final hidden accuracy. Notebook association is supplied by the user; the account row has an empty description."
+}
