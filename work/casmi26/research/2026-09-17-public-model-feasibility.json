@@ -1,0 +1,81 @@
+{
+  "scope":"public-model feasibility and execution checks; not a CASMI accuracy experiment",
+  "material_download": {
+    "pc_workflow_run_id":35174305699,
+    "artifact_id":10477827734,
+    "artifact_sha256":"fc20849cf71c934d3588a3ac89bd63aa728377687003f039c17940d622624373",
+    "third_party_code_executed_on_user_pc":false,
+    "pc_packages_installed_or_changed":false,
+    "kaggle_writes":0
+  },
+  "fiora": {
+    "repository":"BAMeScience/fiora",
+    "commit":"e19ef82c9a6cb9dbac92bce23e914008f1aeb44e",
+    "source_archive_sha256":"5fde1a6c7cf19e99aa655ae83d793292fe9e9c8feca2c499bbffe028fdce7538",
+    "repository_license":"MIT",
+    "model":"FIORA OS v1.0.0",
+    "state_dict_sha256":"83221e187991f116a8aed1bf272dd656cf31721a177dcbb0239f414c8df31a0e",
+    "weight_loader":"author load_from_state_dict, torch.load(weights_only=True); no dill object loading",
+    "actual_execution":"isolated local sandbox CPU inference with unmodified author source",
+    "example_spectra":10,
+    "additional_energy_probe_spectra":6,
+    "both_positive_and_negative_example_ions_used":true,
+    "all_peak_lists_nonempty_finite_positive_mz_nonnegative_intensity":true,
+    "all_10_example_outputs_match_author_expected_spectra_at_cosine_above_0_99":true,
+    "minimum_example_cosine_to_author_expected":0.9999999999998876,
+    "repeated_example_numeric_output_identical":true,
+    "ten_example_run_seconds_including_startup":6.167011749000039,
+    "six_energy_probe_run_seconds_including_startup":5.269952052999997,
+    "environment":{"python":"3.13.5","torch":"2.10.0+cpu","numpy":"2.3.5","rdkit":"2025.09.4"},
+    "released_model_metadata": {
+      "training_library":"MSnLib v7",
+      "instrument_vocabulary":["HCD"],
+      "precursor_mode_vocabulary":["[M+H]+","[M-H]-","[M]+","[M]-"],
+      "rt_supported":false,
+      "ccs_supported":false
+    },
+    "added_to_r07":false,
+    "required_before_integration":[
+      "timsTOF-domain validation rather than silently asserting HCD equivalence",
+      "explicit unsupported-adduct policy",
+      "pretraining overlap audit or an explicit overlapping-data qualification",
+      "reproducible supported-mode reranking gain on unspent validation data",
+      "official pinned RDKit deployment and offline environment verification"
+    ]
+  },
+  "frigid": {
+    "metadata_source":"https://zenodo.org/api/records/19685145",
+    "response_status":200,
+    "metadata_sha256":"54822726793f1c2d0ce8022bf885ec942cd06aaa1671d633fe4b7ebad4bd364a",
+    "checkpoint_archive":"frigid_pretrained_checkpoints.tar.gz",
+    "checkpoint_bytes":2804076946,
+    "checkpoint_md5":"1059c193b5f3dd7034079076e943389b",
+    "record_license_id":"cc-by-nc-4.0",
+    "code_license":"Apache-2.0",
+    "checkpoint_downloaded":false,
+    "model_executed":false,
+    "added_to_r07":false,
+    "eligibility":"Weight-record license is different from code license; competition use/redistribution permission must be resolved before deployment, not inferred from code openness.",
+    "scientific_dependency":"Requires compatible radius-2 4096-bit fingerprint and molecular formula; current radius-3 4096-bit head is not interchangeable."
+  },
+  "ms_gpt": {
+    "public_page":"https://pan.sjtu.edu.cn/web/share/8f63823e4d82280636e537d1c789128d",
+    "response_status":200,
+    "content_type":"text/html",
+    "bytes":9850,
+    "sha256":"934fc8441a548289a80fe027e04b7ea8c5cd530a02779c44765a7ef3c2d4c9b3",
+    "checkpoint_downloaded":false,
+    "model_executed":false,
+    "added_to_r07":false,
+    "qualification":"Fetching the sharing-page HTML is not fetching or testing model weights. Formula and fingerprint interface compatibility also require validation."
+  },
+  "official_score":null,
+  "casmi_test_labels_used":false,
+  "casmi_accuracy_measured_by_this_probe":false,
+  "r10_r11_complete":false,
+  "limitations":[
+    "FIORA example reproduction establishes an executable baseline, not unknown-molecule identification quality.",
+    "No measured gain from formula prediction, generative structure recovery or forward-model reranking is claimed.",
+    "No third-party weights were merged into the R07 bundle or its already verified notebook."
+  ]
+}
