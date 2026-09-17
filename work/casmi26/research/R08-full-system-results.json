@@ -1,0 +1,50 @@
+{
+  "evidence_type": "completed_PC_study_plus_independent_numerical_recalculation",
+  "experiment": "R08-forward-evidence-v1",
+  "verification_run_id": 35251542947,
+  "verification_job_id": 105304834470,
+  "artifact_id": 10509633875,
+  "artifact_sha256": "f16151f94a55765752e638855a782f252526657262d0b9cbbebdeb6f80dbc2d2",
+  "report_sha256": "d2ffad9e190ec9d6c77974644b52d1142084fa221c3f9fea868d147d26333b99",
+  "source_scores_sha256": "d9b2532085447cec7071e94b0a497442d664864c779bbf011ccccc996938356e",
+  "forward_features_sha256": "7c015091b66bf5df385fbd22093f635239b260507180081cdee4029924546ff4",
+  "cohort": {"calibration": 80, "reused_natural_products": 170, "fresh_for_this_experiment_timsTOF": 128, "query_spectra": 1969, "own_backward_model_training_overlap": 0},
+  "baseline": "Full frozen R07 scoring, including spectral references, mass penalty and real COCONUT candidates",
+  "selected": {"feature": "cosine_nearest", "weight": 0.25, "formula": "r07_score + 0.25 * forward_evidence", "selection_on_calibration_only": true, "forward_shortlist_per_regime": 32},
+  "simulation": {"candidate_graphs": 11665, "graphs_predicted": 10989, "graphs_failed": 28, "graphs_without_supported_modes": 648, "spectra_predicted": 61088, "seconds": 1081.2860548999743, "device": "cpu", "threads": 4, "energies": [10,20,40,60], "adducts": ["[M+H]+","[M-H]-"]},
+  "reused_np_diagnostic": {
+    "available": {"r07_mrr": 0.9359082420847127, "r08_mrr": 0.9288587556234614, "delta": -0.007049486461251168, "ci95": [-0.020588235294117647,0.004901960784313725]},
+    "absent": {"r07_mrr": 0.27534182335229307, "r08_mrr": 0.35257717487898693, "delta": 0.07723535152669388, "ci95": [0.04778920304531542,0.1099360866390036]},
+    "external_recovery": {"r07_mrr": 0.13116116954861382, "r08_mrr": 0.15866180601133054, "delta": 0.02750063646271671, "ci95": [0.016213550380847857,0.040167417358772474]}
+  },
+  "fresh_timsTOF_transfer": {
+    "available_and_absent_identical_because_no_same_key_references": true,
+    "absent": {"r07_mrr": 0.0636806785477062, "r08_mrr": 0.16449154246488806, "r07_top1": 0.0078125, "r08_top1": 0.078125, "delta": 0.10081086391718186, "ci95": [0.06545879944943718,0.14038404433650123]},
+    "external_recovery": {"r07_mrr": 0.0, "r08_mrr": 0.0, "true_structure_coverage": 0.0, "meaning": "No candidate truth in this panel; it cannot demonstrate conditional external reranking quality."}
+  },
+  "independent_verification": {"audit_rank_decisions_recomputed": 1788, "calibration_selection_recomputed": true, "all_metrics_and_bootstrap_recomputed": true, "tolerance": 1e-12, "bootstrap_repeats": 2000, "bootstrap_unit": "molecule", "production_ranker_not_imported": true},
+  "pretraining_lineage": {
+    "FIORA_source_commit": "e19ef82c9a6cb9dbac92bce23e914008f1aeb44e",
+    "FIORA_state_sha256": "83221e187991f116a8aed1bf272dd656cf31721a177dcbb0239f414c8df31a0e",
+    "declared_training_library": "MSnLib v7",
+    "exact_public_model_training_membership_known": false,
+    "pluskal_ms2_source_found_in_reused_np": 154,
+    "pluskal_ms2_source_not_found_in_reused_np": 16,
+    "pluskal_ms2_source_not_found_in_fresh_panel": 128,
+    "source_absence_is_not_proof_of_public_model_pretraining_disjointness": true
+  },
+  "promotion_gate": {"eligible": false, "failed_check": "fresh_external_positive_interval", "gate_not_relaxed_after_observation": true},
+  "tests_on_PC": {"passed": 326, "failed": 0, "warnings": 223, "seconds": 35.73},
+  "r07_weights_unchanged": true,
+  "new_training_in_verification": false,
+  "new_Kaggle_submissions": 0,
+  "official_score_for_R08": null,
+  "limitations": [
+    "This is no longer the old mass-only R08 comparison, but still not a Kaggle result.",
+    "The NP audit keys are already spent; their results are diagnostic.",
+    "Fresh enveda-180 compounds are not a representative sample of hidden natural products; some have dimer adducts.",
+    "No de novo generator or proven public-model-disjoint external-recovery evaluation is included.",
+    "Missing or failed forward predictions keep the original R07 score.",
+    "An exact-screening extension is evaluated separately without changing these selected coefficients or the failed promotion decision."
+  ]
+}
