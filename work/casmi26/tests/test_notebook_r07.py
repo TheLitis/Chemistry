@@ -22,3 +22,12 @@ def test_notebook_source_archive_is_reproducible(tmp_path):
     a=build_notebook(tmp_path/'a.ipynb').read_bytes()
     b=build_notebook(tmp_path/'b.ipynb').read_bytes()
     assert a==b
+
+
+def test_notebook_restores_opaque_archive_transport_without_repacking(tmp_path):
+    from casmi26.notebook_r07 import build_notebook
+    n=json.loads(build_notebook(tmp_path/'snapshot.ipynb').read_text())
+    text='\n'.join(''.join(c['source']) for c in n['cells'] if c['cell_type']=='code')
+    assert "BUNDLE/'coconut.snapshot'" in text
+    assert "'coconut.zip'" in text and "'model.npz'" in text
+    assert 'copyfile' in text
