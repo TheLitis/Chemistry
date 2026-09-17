@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r08-completion-20260917-01",
+  "id": "casmi-r08-exact-screen-20260917-01",
   "task": "script",
-  "script": "tasks/casmi_r08_completion.py",
+  "script": "tasks/casmi_r08_exact.py",
   "arguments": [],
   "requireCuda": false
 }
