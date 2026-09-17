@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r07-archive-acceptance-20260917-01",
+  "id": "casmi-r07-private-preview-verify-20260917-01",
   "task": "script",
-  "script": "tasks/casmi_r07_acceptance.py",
-  "arguments": [],
+  "script": "tasks/casmi_r07_shadow.py",
+  "arguments": ["--stage", "verify"],
   "requireCuda": false
 }
