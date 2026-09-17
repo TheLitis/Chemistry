@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r08-forward-simulation-20260917-01",
+  "id": "casmi-r08-resume-explicit-paths-20260917-01",
   "task": "script",
-  "script": "tasks/casmi_r08_forward.py",
-  "arguments": [],
+  "script": "tasks/casmi_r08_resume.py",
+  "arguments": ["--device", "cpu"],
   "requireCuda": false
 }
