@@ -29,6 +29,15 @@ DATA=mounts[0]
 manifests=list(INPUT.rglob('r07-bundle.json'))
 if len(manifests)!=1:raise RuntimeError('Expected a single R07 model bundle')
 BUNDLE=manifests[0].parent
+# Some dataset services unpack .zip inputs. Transport the unchanged ZIP bytes
+# under an opaque extension and restore the exact manifest name locally.
+if not (BUNDLE/'coconut.zip').is_file() and (BUNDLE/'coconut.snapshot').is_file():
+    import shutil
+    restored=WORK/'r07_bundle';restored.mkdir(exist_ok=True)
+    for name in ('r07-bundle.json','model.npz','catalog.json','fingerprints.npy'):
+        shutil.copyfile(BUNDLE/name,restored/name)
+    shutil.copyfile(BUNDLE/'coconut.snapshot',restored/'coconut.zip')
+    BUNDLE=restored
 CODE=WORK/'r07_code';CODE.mkdir(exist_ok=True)
 with zipfile.ZipFile(io.BytesIO(base64.b64decode(SOURCE_B64))) as z:
     for item in z.infolist():
