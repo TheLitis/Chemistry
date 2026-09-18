@@ -32,6 +32,7 @@ def test_selected_feature_backend_preserves_full_top25_and_certificate():
 
 
 def test_fast_backend_reuses_same_prediction_cache(tmp_path):
+    pytest.importorskip("torch")
     q,rows,scores = example();path=tmp_path/'forward.sqlite'
     old=ForwardRanker(q,model=NumericModel(),cache=path)
     expected=old('q',rows,[],scores);old.close()
