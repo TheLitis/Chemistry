@@ -46,7 +46,9 @@ def read_raw_queries(path):
 
 
 class ForwardRanker:
-    def __init__(self,queries,*,model,cache=None):
+    def __init__(self,queries,*,model,cache=None,nearest_only=False):
+        if type(nearest_only) is not bool:raise ValueError('nearest_only must be boolean')
+        self.nearest_only=nearest_only
         self.queries=queries;self.model=model;self.cache={};self.statistics=Counter();self.db=None
         if cache is not None:
             import torch,rdkit
@@ -94,6 +96,9 @@ class ForwardRanker:
         n_supported=sum(q['adduct'] in SUPPORTED_ADDUCTS for q in raw)
         def evidence(i):
             pred=self.predictions(rows[i][1],modes)
+            if self.nearest_only:
+                from .forward_nearest import pool_cosine_nearest_only
+                return pool_cosine_nearest_only(raw,pred)
             return pool_forward_scores(raw,pred)['features'].get(FORWARD_FEATURE)
         result=certified_rerank(scores,evidence,weight=FORWARD_WEIGHT if modes else 0.,k=25)
         if not result['certified']:raise RuntimeError('Uncertified forward ranking')
@@ -105,7 +110,7 @@ class ForwardRanker:
             'score_is_probability':False}}
 
 
-def infer(test,train,bundle,output,*,model_path,template=None,workers=4,cache=None,device='cpu'):
+def infer(test,train,bundle,output,*,model_path,template=None,workers=4,cache=None,device='cpu',nearest_only=False):
     from .r07_release import infer as r07_infer
     started=time.monotonic()
     model_path=Path(model_path);test=Path(test);output=Path(output);bundle=Path(bundle)
@@ -118,7 +123,7 @@ def infer(test,train,bundle,output,*,model_path,template=None,workers=4,cache=No
             raise ValueError('Cache would overwrite an input or model bundle')
     queries=read_raw_queries(test)
     model=ForwardModel(model_path,device=device)
-    ranker=ForwardRanker(queries,model=model,cache=cache)
+    ranker=ForwardRanker(queries,model=model,cache=cache,nearest_only=nearest_only)
     try:report=r07_infer(test,train,bundle,output,template=template,workers=workers,ranking_adapter=ranker)
     finally:ranker.close()
     if report['prediction_count']!=len(queries) or report['test_spectra']!=sum(map(len,queries.values())):
@@ -126,6 +131,7 @@ def infer(test,train,bundle,output,*,model_path,template=None,workers=4,cache=No
     report.update(format=8,base_format=7,algorithm='R07-plus-fixed-R08B-forward',forward={
         'source':SOURCE,'model_sha256':MODEL_HASH,'params_sha256':PARAMS_HASH,
         'feature':FORWARD_FEATURE,'weight':FORWARD_WEIGHT,'energies':list(ENERGIES),'device':device,
+        'scoring_backend':'nearest-only' if nearest_only else 'all-features',
         'statistics':dict(ranker.statistics),'all_top25_numerically_certified':True,
         'pretraining_membership':'unknown','score_is_probability':False},seconds_total=time.monotonic()-started)
     report['limitations']+=['FIORA supports only [M+H]+ and [M-H]- in this fixed adapter; other ion modes use R07 without a forward bonus.',
@@ -140,11 +146,12 @@ def main(argv=None):
     for n in ('test','train','bundle','output','model-path'):p.add_argument('--'+n,type=Path,required=True)
     p.add_argument('--sample-submission',type=Path);p.add_argument('--cache',type=Path)
     p.add_argument('--workers',type=int,default=4);p.add_argument('--device',choices=('cpu','cuda'),default='cpu')
+    p.add_argument('--nearest-only',action='store_true',help='Exact selected-feature evaluation; score and weights are unchanged')
     a=p.parse_args(argv)
     import torch
     torch.set_num_threads(4)
     r=infer(a.test,a.train,a.bundle,a.output,model_path=a.model_path,template=a.sample_submission,
-        cache=a.cache,workers=a.workers,device=a.device)
+        cache=a.cache,workers=a.workers,device=a.device,nearest_only=a.nearest_only)
     print(json.dumps({k:v for k,v in r.items() if k!='details'},indent=2),flush=True)
     return 0
 
