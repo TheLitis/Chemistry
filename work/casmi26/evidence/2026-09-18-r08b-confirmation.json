@@ -1,0 +1,132 @@
+{
+  "evidence_type": "completed_prospective_PC_experiment_independently_recomputed",
+  "experiment": "R08B-fixed-confirmation-v1",
+  "original_experiment_finished_utc": "2026-09-17T19:37:55.651696+00:00",
+  "reverified_utc_date": "2026-09-18",
+  "experiment_run_id": 35261873374,
+  "experiment_artifact_id": 10517161082,
+  "experiment_artifact_sha256": "bd6694a4df10845c2f7565b49e22cf81eccf5c093323134d2f24f715f3b38741",
+  "independent_PC_verification_run_id": 35319265343,
+  "independent_PC_artifact_id": 10536726326,
+  "independent_PC_artifact_sha256": "9110520ebf33e567640a86bde08cc3a103348f99f5241ff19b18f73192efd8ce",
+  "current_continuation_retrained_models": false,
+  "current_continuation_repeated_expensive_simulations": false,
+  "fixed_score": {
+    "baseline": "full held-out R07 spectral, neural, mass, external-catalog recipe",
+    "candidate": "same R07 score plus 0.25 times bounded FIORA cosine_nearest",
+    "new_calibration": false,
+    "candidate_set_changed_between_methods": false,
+    "shortlist_top32_limit": false,
+    "fiora_source_commit": "e19ef82c9a6cb9dbac92bce23e914008f1aeb44e"
+  },
+  "cohorts": {
+    "fresh_timsTOF": {
+      "molecules": 128,
+      "source": "enveda-180",
+      "available": {"r07_mrr": 0.11781962974662982, "forward_mrr": 0.26274000427087413},
+      "absent": {
+        "r07_mrr": 0.11695157419107427,
+        "forward_mrr": 0.26153261790723775,
+        "r07_top1": 0.0390625,
+        "forward_top1": 0.1171875,
+        "r07_recall25": 0.5,
+        "forward_recall25": 0.7890625,
+        "delta_mrr": 0.14458104371616348,
+        "paired_ci95": [0.11160522169737697, 0.18105580918888517]
+      },
+      "external_recovery": {"r07_mrr": 0.0, "forward_mrr": 0.0, "coverage": 0.0}
+    },
+    "external_covered_mixed": {
+      "molecules": 96,
+      "sampling": "conditional on membership in a previously fixed public COCONUT slice",
+      "available": {
+        "r07_mrr": 0.559373570052024,
+        "forward_mrr": 0.5879876893939394,
+        "delta_mrr": 0.028614119341915396,
+        "paired_ci95": [0.004236190569146983, 0.059717904639676835]
+      },
+      "absent": {
+        "r07_mrr": 0.21722461472477247,
+        "forward_mrr": 0.2853686807133498,
+        "delta_mrr": 0.06814406598857738,
+        "paired_ci95": [0.0381738428401403, 0.10727982050476192]
+      },
+      "external_recovery": {
+        "r07_mrr": 0.07852756202510965,
+        "forward_mrr": 0.10920687437223142,
+        "r07_top1": 0.010416666666666666,
+        "forward_top1": 0.010416666666666666,
+        "r07_recall25": 0.5208333333333334,
+        "forward_recall25": 0.5729166666666666,
+        "delta_mrr": 0.03067931234712178,
+        "paired_ci95": [0.016106902195912008, 0.04766948338813979],
+        "coverage": 0.96875
+      }
+    }
+  },
+  "lineage": {
+    "new_query_keys": 224,
+    "previous_query_keys_reused": 0,
+    "fitting_overlap": 0,
+    "previous_keys_checked_by_PC_verifier": 17722,
+    "hash_holdout_verified": true,
+    "fiora_pretraining_disjointness_proven": false
+  },
+  "numerical_verification": {
+    "query_regime_certificates": 672,
+    "candidate_pairs_across_regimes": 329591,
+    "forward_evaluations": 49050,
+    "certified_unnecessary_evaluations": 280541,
+    "new_graph_calls": 12034,
+    "new_simulated_spectra": 62072,
+    "reused_prior_graphs": 3694,
+    "prediction_failures_with_no_bonus": 8,
+    "forward_seconds": 1651.0806664999982,
+    "all_rankings_and_intervals_recomputed": true,
+    "independent_verifier_imports_production_ranker": false,
+    "bootstrap_unit": "molecule",
+    "bootstrap_repeats": 2000,
+    "tolerance": 1e-12,
+    "second_local_recomputation_matches_PC_metrics_and_gate": true,
+    "second_local_recomputation_did_not_repeat_previous_key_file_audit": true,
+    "certifies_chemical_correctness": false
+  },
+  "prospective_gate": {
+    "eligible_for_candidate_build": true,
+    "fresh_target_absent_improves": true,
+    "fresh_external_recovery_improves": true,
+    "reference_noninferiority_margin_minus_0_03": true,
+    "external_mass_window_coverage_at_least_0_80": true,
+    "original_R08_failed_gate_was_not_relaxed": true
+  },
+  "software_evidence": {
+    "prior_PC_verification_tests_passed": 379,
+    "prior_PC_verification_warnings": 223,
+    "new_local_submission_guard_tests_with_existing_R07_tests_passed": 38,
+    "new_local_combined_numerical_and_submission_tests_passed": 78,
+    "new_submission_guard_CI_run_id": 35324928149,
+    "hosted_windows_and_linux_jobs_succeeded": true,
+    "hosted_linux_tests": {"passed": 388, "skipped": 11, "failed": 0}
+  },
+  "last_actual_Kaggle_read": {
+    "source_run_id": 35319265343,
+    "date": "2026-09-18",
+    "r07_ref": 56292572,
+    "r07_status": "COMPLETE",
+    "r07_public_score": 0.188,
+    "r07_error_description": "",
+    "official_remaining_at_that_read": 5,
+    "total_prior_attempts": 5
+  },
+  "new_competition_submissions_in_this_continuation": 0,
+  "official_score_for_R08B": null,
+  "champion_changed": false,
+  "limitations": [
+    "This is retrieval/reranking, not de novo molecular generation.",
+    "The external-covered cohort is conditional and mixed-instrument; it is not representative of all unseen compounds.",
+    "The fresh timsTOF cohort's external-recovery coverage is zero, and both methods score zero there.",
+    "FIORA pretraining membership remains unresolved. No fully model-disjoint novel-structure claim is made.",
+    "Confidence intervals describe these fixed models/cohorts, not future training variability or Kaggle private-score uncertainty.",
+    "Candidate build, offline Linux preview and official scoring are separate acceptance stages; the research gate alone establishes none of them."
+  ]
+}
