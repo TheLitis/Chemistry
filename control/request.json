@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r08b-release-build-20260918-01",
+  "id": "casmi-r08b-offline-stage-20260918-01",
   "task": "script",
-  "script": "tasks/casmi_r08b_candidate_release.py",
-  "arguments": ["--stage", "build"],
+  "script": "tasks/casmi_r08b_preview.py",
+  "arguments": ["--stage", "stage"],
   "requireCuda": false
 }
