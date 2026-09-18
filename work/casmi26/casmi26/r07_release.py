@@ -108,7 +108,7 @@ def external_candidates(archive,observed,workers=1):
     return rows,fp,{'mass_selected':len(pending),'accepted':len(rows),'unique_keys':len({r[2] for r in rows}),'scan':dict(counter)}
 
 
-def infer(test,train,bundle,output,*,template=None,workers=4):
+def infer(test,train,bundle,output,*,template=None,workers=4,ranking_adapter=None):
     import pyarrow.parquet as pq
     from .production import test_groups, reference_score
     from .portable import reference_library,output_order
@@ -164,11 +164,22 @@ def infer(test,train,bundle,output,*,template=None,workers=4):
         score=selected_scores(z,np.unpackbits(fp,axis=1),spectral,np.array([r[3] for r in rows]),mass,
                               flags,manifest['selection'],manifest['mass_offset_ppm'])
         ranked=np.argsort(-score,kind='stable')[:25]
+        extension=None
+        if ranking_adapter is not None:
+            proposal=ranking_adapter(cid,rows,queries,score.copy())
+            if not isinstance(proposal,dict):raise ValueError('Invalid ranking adapter result')
+            indices_=proposal.get('top_indices');extension=proposal.get('metadata',{})
+            if not isinstance(indices_,list) or len(indices_)!=min(25,len(rows)) or not all(type(i) is int and 0<=i<len(rows) for i in indices_):
+                raise ValueError('Invalid ranking indices')
+            if len(set(indices_))!=len(indices_) or not isinstance(extension,dict):raise ValueError('Invalid ranking duplicates/metadata')
+            json.dumps(extension,allow_nan=False)
+            ranked=np.asarray(indices_,dtype=np.int64)
         guesses=[rows[i][1] for i in ranked]
         predictions.append({'molecule_id':cid,'smiles':';'.join(guesses)})
         details[cid]={'spectra_used':len(queries),'candidates':len(rows),'external_only_candidates':int(flags.sum()),
             'mode':mode,'guesses':len(guesses),'selected_key':rows[ranked[0]][2],
             'top1_mass_error_da':float(rows[ranked[0]][3]-mass),'top1_external_only':bool(flags[ranked[0]])}
+        if extension is not None:details[cid]['ranking_extension']=extension
         if len(predictions)%50==0:print('R07_INFER '+str(len(predictions))+'/'+str(len(order)),flush=True)
     buf=io.StringIO(newline='');writer=csv.DictWriter(buf,fieldnames=['molecule_id','smiles'],lineterminator='\n')
     writer.writeheader();writer.writerows(predictions);text=buf.getvalue()
