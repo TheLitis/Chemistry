@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r08b-offline-stage-20260918-01",
+  "id": "casmi-r08b-continue-20260918-01",
   "task": "script",
-  "script": "tasks/casmi_r08b_preview.py",
-  "arguments": ["--stage", "stage"],
+  "script": "tasks/casmi_r08b_continue.py",
+  "arguments": [],
   "requireCuda": false
 }
