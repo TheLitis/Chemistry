@@ -21,7 +21,7 @@ same-formula-only policies after seeing their outcomes.
 
 Use `R10G-prospective-20260918` to deterministically select 128 previously unused
 hash-holdout molecular keys with spectra in enveda-180, and 96 other unused keys
-from a fixed, pre-existing COCONUT slice. All previous research protocols and
+from a fixed, pre-existing COCONUT snapshot (see the v2 source amendment). All previous research protocols and
 rank files contribute to exclusions, including the entire 224-case R08B group
 used in the exploratory graph screen. Save the exclusion list and its hash.
 
@@ -64,3 +64,23 @@ FIORA simulations; do not edit the incumbent cache or weights. Kaggle is queried
 read-only for the existing R08B submission. This experiment cannot submit or
 promote automatically. Independently reconstruct ranks, certificates, metric
 values, intervals and gates from recorded arrays after completion.
+
+## Pre-outcome source amendment (v2)
+
+The v1 preflight, run 35378155922 (artifact SHA256
+`b9b61bc932387d64f7e9f142b4dfc0755b720eec711ec6b847f9c9112fbdf829`),
+found 6509 unused target keys but only FOUR unused external keys in the old
+mass-selected slice. It stopped before creating candidate scores, computing
+forward evidence or calculating any new ranks. The failed run and frozen v1
+policy remain unchanged. No quality gate failed or was relaxed.
+
+V2 therefore defines external membership from the SAME already-fixed complete
+August-2026 COCONUT snapshot, mass-indexed against ALL unused holdout structures
+with valid source metadata, and canonically keyed by the existing pipeline.
+Membership is recorded before scoring, including input and exclusion hashes.
+The source snapshot, seed, 128/96 cohort sizes, selected feature, weights, all
+gates and model weights remain unchanged. Only the inadequate external pool
+definition and state directory are amended. No query is resampled based on its
+rank, no spectrum is added to model fitting, and no scoring parameter is retuned.
+The v2 external cohort remains conditional on catalog membership, not an
+estimate of coverage for arbitrary unknown compounds.

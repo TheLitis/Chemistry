@@ -8,7 +8,7 @@ from collections import defaultdict, Counter
 import gzip,hashlib,json,os
 from pathlib import Path
 from casmi_r08b_confirmation import used_keys
-from casmi_connected_confirmation import choose_keys,SEED,ROOT_RELATIVE,SELECTION,GATES
+from casmi_connected_confirmation import choose_keys,SEED,ROOT_RELATIVE,SELECTION,GATES,AMENDMENT
 SOURCE='e19ef82c9a6cb9dbac92bce23e914008f1aeb44e'
 
 
@@ -58,7 +58,6 @@ def prepare(state, repo, out):
         raise ValueError('Holdout model fitting lineage differs')
     excluded = used_keys(art, root) | npkeys
     write_json(root/'previous-query-keys.json',sorted(excluded))
-    external_known = {r[2] for r in json.loads((old/'external.json').read_text())}
     available_sources = defaultdict(set)
     with pq.ParquetFile(train) as table:
         for batch in table.iter_batches(batch_size=65536, columns=['normalized_smiles', 'ingest_lib']):
@@ -68,6 +67,28 @@ def prepare(state, repo, out):
                     key = catalog[i][2]
                     if key in bykey and key not in excluded and source != 'enveda-np-examples':
                         available_sources[key].add(str(source))
+    # Membership is computed before any new candidate scores. The prior
+    # mass-selected external slice had only four unused keys; its failed v1
+    # preflight is preserved and cannot be silently reclassified as an audit.
+    coconut = state/'data/external/coconut-2026-08/coconut_csv_lite-08-2026.zip'
+    if sha256(coconut)!=prior['source']['coconut_snapshot_sha256']:
+        raise ValueError('Fixed COCONUT snapshot changed')
+    membership=root/'pool-membership.json'
+    membership_identity={'coconut_sha256':sha256(coconut),
+        'eligible_keys_sha256':hashlib.sha256('\n'.join(sorted(available_sources)).encode()).hexdigest(),
+        'selection_uses_candidate_scores':False,'amendment':AMENDMENT}
+    if membership.exists():
+        info=json.loads(membership.read_text())
+        if info['identity']!=membership_identity:raise ValueError('Changed external membership definition')
+        external_known=set(info['keys'])
+    else:
+        print('R10G_FULL_COCONUT_MEMBERSHIP_START',flush=True)
+        probe_masses=[catalog[bykey[k]][3] for k in available_sources]
+        pool_records,pool_fp,pool_summary=external_candidates(coconut,probe_masses,workers=8)
+        external_known={r[2] for r in pool_records}&set(available_sources)
+        write_json(membership,{'identity':membership_identity,'keys':sorted(external_known),
+            'public_scan':pool_summary,'probe_molecule_count':len(probe_masses)})
+        del pool_records,pool_fp
     target_pool = {k for k, sources in available_sources.items() if 'enveda-180' in sources}
     ext_pool = set(available_sources) & external_known
     write_json(out/'eligible-pools.json', {'target': len(target_pool), 'external': len(ext_pool),
@@ -79,10 +100,10 @@ def prepare(state, repo, out):
     query_source = {k: 'enveda-180' for k in target}
     for key in external:
         query_source[key] = min(available_sources[key], key=lambda s: hashlib.sha256((SEED+':source:'+key+':'+s).encode()).digest())
-    protocol = {'experiment': 'R10G-prospective-confirmation-v1', 'target_keys': target, 'external_keys': external,
+    protocol = {'experiment': 'R10G-prospective-confirmation-v2', 'target_keys': target, 'external_keys': external,
         'target_source': 'enveda-180', 'external_source_rule': 'one hashed source per previously unseen externally covered key',
-        'external_pool': 'intersection of fixed prior COCONUT mass-selected public records and unused hash-holdout structures',
-        'external_pool_not_random_all_COCONUT': True, 'query_source': query_source,
+        'external_pool': 'intersection of the fixed complete COCONUT snapshot and unused hash-holdout structures, with canonical mass indexing',
+        'external_pool_not_random_all_COCONUT': True, 'amendment':AMENDMENT, 'pool_membership_sha256':sha256(membership), 'query_source': query_source,
         'excluded_prior_key_count': len(excluded), 'training_query_overlap': 0,
         'frozen_selection': SELECTION, 'new_weight_search': False,
         'base_recipe': prior['selected'], 'base_mass_offset_ppm': prior['mass_offset_ppm'],
@@ -177,6 +198,6 @@ def prepare(state, repo, out):
     with gzip.open(root/'evidence.json.gz','wt',encoding='utf-8') as f:json.dump(records,f,allow_nan=False,separators=(',',':'))
     prepared={'status':'prepared','script_sha256':sha256(Path(__file__)),'records':len(records),
         'query_spectra':sum(map(len,groups.values())),'reference_counts':dict(refcounts),
-        'files':{n:sha256(root/n) for n in ('protocol.json','evidence.json.gz','external.json','external.npy','previous-query-keys.json')}}
+        'files':{n:sha256(root/n) for n in ('protocol.json','evidence.json.gz','external.json','external.npy','previous-query-keys.json','pool-membership.json')}}
     write_json(done,prepared);print('R10G_PREPARED '+json.dumps({k:v for k,v in prepared.items() if k!='files'}),flush=True)
     return root

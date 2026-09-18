@@ -42,7 +42,7 @@ def test_locked_feature_does_not_search_multiple_variants():
     m=module()
     assert m.SELECTION['feature']=='two_cut' and m.SELECTION['weight']==.25
     assert m.SELECTION['scope']=='complete_R08B_top25'
-    assert m.ROOT_RELATIVE=='artifacts/casmi26/research-r10-connected/confirmation-v1'
+    assert m.ROOT_RELATIVE=='artifacts/casmi26/research-r10-connected/confirmation-v2'
     assert m.SEED!='R08B-fixed-confirmation-20260917'
 
 
@@ -66,3 +66,14 @@ def test_prepared_record_identity_cannot_reuse_prior_or_missing_keys():
     with pytest.raises(ValueError):m.validate_partitions(plan,records[:-1],set(),expected_sizes=(2,1))
     with pytest.raises(ValueError):m.validate_partitions(plan,records+[records[0]],set(),expected_sizes=(2,1))
     with pytest.raises(ValueError):m.validate_partitions(plan,[{**r,'cohort':'external_covered_mixed'} for r in records],set(),expected_sizes=(2,1))
+
+
+def test_v2_amendment_is_pre_outcome_and_keeps_all_quality_gates():
+    m=module()
+    assert getattr(m,'AMENDMENT',{}).get('original_stop')=='insufficient_unused_external_keys'
+    assert m.AMENDMENT['scores_evaluated_before_amendment']==0
+    assert m.AMENDMENT['observed_external_pool_size']==4
+    assert m.AMENDMENT['replace_source']=='fixed_full_COCONUT_snapshot_membership'
+    assert m.GATES['external_recovery_delta_lower95_gt']==0.
+    assert m.GATES['external_available_delta_lower95_gt']==-.02
+    assert m.SELECTION['weight']==.25 and m.SELECTION['base_forward_weight']==.25

@@ -18,8 +18,11 @@ import subprocess
 import sys
 import time
 
-ROOT_RELATIVE='artifacts/casmi26/research-r10-connected/confirmation-v1'
+ROOT_RELATIVE='artifacts/casmi26/research-r10-connected/confirmation-v2'
 SEED='R10G-prospective-20260918'
+AMENDMENT={'original_stop':'insufficient_unused_external_keys','observed_external_pool_size':4,
+           'scores_evaluated_before_amendment':0,'replace_source':'fixed_full_COCONUT_snapshot_membership',
+           'aborted_run_id':35378155922,'aborted_artifact_sha256':'b9b61bc932387d64f7e9f142b4dfc0755b720eec711ec6b847f9c9112fbdf829'}
 SELECTION={'feature':'two_cut','weight':.25,'scope':'complete_R08B_top25','max_cuts':2,
            'max_scenarios':8192,'hydrogen_shift':1,'ppm':5.,'da':.001,'relative_floor':.01,
            'base_forward_feature':'cosine_nearest','base_forward_weight':.25}
@@ -155,15 +158,15 @@ def evaluate(state,repo,out):
     write_json(root/'audit-ranks.json',raw)
     for name,value in [('certificates.json.gz',certs),('graph-evidence.json.gz',graph)]:
         (root/name).write_bytes(gzip.compress(json.dumps(value,allow_nan=False,separators=(',',':')).encode(),mtime=0))
-    result={'experiment':'R10G-prospective-confirmation-v1','status':'completed','selection':SELECTION,'cohorts':groups,
+    result={'experiment':'R10G-prospective-confirmation-v2','status':'completed','selection':SELECTION,'amendment':AMENDMENT,'cohorts':groups,
         'decision':decide(groups,recall_preserved=True),'recall_preserved':True,'query_count':len(records),
         'previous_query_keys_reused':0,'training_query_overlap':0,'seconds':time.monotonic()-started,
         'graph_statistics':dict(stats),'forward_statistics':dict(ranker.statistics),
         'new_training':False,'new_submissions':0,'official_score':None,'champion_changed':False,
         'files':{n:sha256(root/n) for n in ('protocol.json','frozen-graph-policy.json','prepared.json','evidence.json.gz',
-            'audit-ranks.json','certificates.json.gz','graph-evidence.json.gz','previous-query-keys.json')},
+            'audit-ranks.json','certificates.json.gz','graph-evidence.json.gz','previous-query-keys.json','pool-membership.json')},
         'limitations':['FIORA pretraining membership unknown; not a fully model-disjoint or de novo result.',
-            'External cohort is conditional on a fixed public catalog slice, not representative of arbitrary unknowns.',
+            'External cohort is conditional on a fixed public catalog, not representative of arbitrary unknowns.',
             'Only reorders the R08B top25; absent answers remain unrecoverable.',
             'Cut-count and H-shift penalties are heuristic, not mechanistic chemical validation.',
             'No parameter changes are permitted after this confirmation.']}
@@ -185,7 +188,7 @@ def main():
         prepare(state,repo,out);return 0
     if len(sys.argv)>1 and sys.argv[1]=='_evaluate':evaluate(state,repo,out);return 0
     root=state/ROOT_RELATIVE;root.mkdir(parents=True,exist_ok=True)
-    policy={'selection':SELECTION,'gates':GATES,'seed':SEED,'target_size':128,'external_size':96,
+    policy={'selection':SELECTION,'gates':GATES,'amendment':AMENDMENT,'seed':SEED,'target_size':128,'external_size':96,
         'code':{name:sha256(repo/name) for name in ('tasks/casmi_connected_confirmation.py','tasks/casmi_connected_cohort.py',
              'work/casmi26/casmi26/connected_evidence.py','work/casmi26/casmi26/connected_experiment.py')}}
     path=root/'frozen-graph-policy.json'
