@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r08b-confirmation-20260917-01",
+  "id": "casmi-r08b-release-verify-20260918-01",
   "task": "script",
-  "script": "tasks/casmi_r08b_confirmation.py",
-  "arguments": [],
+  "script": "tasks/casmi_r08b_candidate_release.py",
+  "arguments": ["--stage", "verify"],
   "requireCuda": false
 }
