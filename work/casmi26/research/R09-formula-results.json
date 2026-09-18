@@ -1,0 +1,85 @@
+{
+  "experiment": "R09-subformula-diagnostic-v1",
+  "status": "completed_and_independently_recomputed",
+  "scope": "Exploratory reused R08B cohorts, NOT an untouched validation set",
+  "comparison": "Full fixed R07 versus R07 plus elemental evidence; NOT R08B plus elemental evidence",
+  "source_sha256": "217153e52d50112f47c51de90806691fd1c6dd67c2b45ed6625a9c5d7ef0c629",
+  "query_count": 224,
+  "formula_query_pairs": 7650,
+  "formula_pairs_scored": 7342,
+  "formula_pairs_without_supported_spectra": 308,
+  "unsupported_structure_query_pairs": 740,
+  "maximum_subformula_states": 2000000,
+  "settings": {"weight": 0.25, "ppm": 5.0, "da": 0.001, "relative_floor": 0.01},
+  "parameter_selection_performed": false,
+  "rdkit": "2026.03.3",
+  "pc_execution_seconds": 13.251301800017245,
+  "pc_tests": {"passed": 28, "failed": 0, "seconds": 0.94},
+  "run_id": 35367122221,
+  "artifact_id": 10557550335,
+  "artifact_sha256": "9c6612b94e615504f7b52114540f61b151702a60c837155fdb0488fb9607b6ae",
+  "execution_commit": "450ee8e69fa699c11f5eadd361963d880eb8223a",
+  "pc_report_sha256": "738914ea22ff26ee25d27b092ad1421954abcb22e4e7717205911a7e1595268c",
+  "pc_results_sha256": "a550de73490023cc997576ee9ee80dd5a13e1fcbd7c90fc7a9c13d8355e799ec",
+  "groups": {
+    "reused_timsTOF_128_no_references": {
+      "r07_mrr": 0.11695157419107427,
+      "plus_explained_mrr": 0.12216414466408418,
+      "plus_explained_delta_ci95": [0.0018200181021270142, 0.009590853241086252],
+      "plus_excess_mrr": 0.12119998295773499,
+      "plus_excess_delta_ci95": [0.0011292865570401245, 0.008184892804098102],
+      "top1_all_three": 0.0390625
+    },
+    "reused_external_covered_96_no_references": {
+      "r07_mrr": 0.21722461472477247,
+      "plus_explained_mrr": 0.22073657395219223,
+      "plus_excess_mrr": 0.22073657395219223,
+      "delta_ci95_both": [-0.004596666582686319, 0.014567860429805329],
+      "top1_all_three": 0.09375
+    },
+    "reused_external_covered_96_external_recovery": {
+      "r07_mrr": 0.07852756202510965,
+      "plus_explained_mrr": 0.0766916125799177,
+      "plus_excess_mrr": 0.07758884414665392,
+      "plus_explained_delta_ci95": [-0.006586252924389365, 0.002250928790900416],
+      "plus_excess_delta_ci95": [-0.004188729184530585, 0.001953371546940667],
+      "top1_all_three": 0.010416666666666666
+    }
+  },
+  "independent_verification": {
+    "production_scorer_imported": false,
+    "ranks_recomputed": 2016,
+    "metrics_recomputed": 54,
+    "paired_intervals_recomputed": 12,
+    "max_recalculation_error": 0.0,
+    "pc_linux_feature_parity_checks": 22026,
+    "max_pc_linux_feature_difference": 3.3306690738754696e-16,
+    "bootstrap_unit": "molecule",
+    "bootstrap_repeats": 2000,
+    "bootstrap_seed": 26091603
+  },
+  "answer_aware_formula_oracle": {
+    "used_for_inference": false,
+    "meaning": "Move the true formula group first but preserve the baseline ordering inside it. Not a bound for new isomer scorers or generators.",
+    "timsTOF_128_no_references_oracle_mrr": 0.13991889187201687,
+    "mixed_96_no_references_oracle_mrr": 0.2701804171460354,
+    "timsTOF_median_same_formula_candidates_if_truth_present": 32.0,
+    "mixed_median_same_formula_candidates_if_truth_present": 69.0,
+    "unsupported_true_compositions": 0,
+    "missing_true_candidates_remain_zero": true
+  },
+  "decision": "Do not promote either elemental bonus into the champion or spend a submission on it.",
+  "new_training": false,
+  "new_submissions": 0,
+  "production_scoring_changed": false,
+  "limitations": [
+    "The query sets were previously examined; the bootstrap intervals are descriptive rather than independent confirmatory evidence.",
+    "Equal formulas receive equal elemental evidence: constitutional isomers are not separated.",
+    "Subcomposition enumeration is permissive and does not model fragment connectivity, reaction feasibility or a fragmentation tree.",
+    "Shifted masses are arithmetic controls, not chemical decoys or calibrated probabilities.",
+    "Only neutral unlabelled CHNOPS/halogen structures and protonated/deprotonated observations are supported.",
+    "The feature reads candidate compositions, never the answer formula from query metadata. Only the explicitly labelled oracle uses the answer.",
+    "No SIRIUS code, web service, restricted weights, isotope envelope or graph generator was used.",
+    "The signal did not improve Top1 in the listed regimes and slightly reduced external-recovery MRR."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "evidence_type": "completed_ChemistryPC_read_of_existing_Kaggle_submission",
+  "competition": "enveda-CASMI26-molecule-id-mass-spectra",
+  "checked_utc": "2026-09-18T16:13:31.436190+00:00",
+  "submission_ref": 56331047,
+  "submitted_utc": "2026-09-18T13:17:30.613000+00:00",
+  "kernel": "thelindortis/casmi26-r08b-forward-hybrid",
+  "kernel_version": 1,
+  "status": "COMPLETE",
+  "classification": "scored",
+  "public_score": 0.193,
+  "error_description": "",
+  "score_is_private_or_final": false,
+  "previous_best": {"version": "R07", "submission_ref": 56292572, "public_score": 0.188},
+  "absolute_public_mrr_gain": 0.005,
+  "relative_public_mrr_gain_percent": 2.6595744680851063,
+  "statistical_significance_of_public_gain": "not_estimated_from_a_single_aggregate_score",
+  "identity": {
+    "package_sha256": "b2c762ca9bc36ede6e48431b1bbe86d99b97835680d922a29252b7c3477f3a49",
+    "asset_manifest_sha256": "f55a3ad0d613572434ae1da37b9915937767c2bc7165b5f59ed7620ecd919a5b",
+    "notebook_sha256": "4218786960f1f07e053630a99d34fdbbc9174e6ce7e4b01b63c184fe982503ac",
+    "verified_visible_csv_sha256": "2b7190fcc6878e2f7afb9ca15c87798d700bd3bd5c8b7d60d3bc2017fe2b634c"
+  },
+  "source": {
+    "run_id": 35367122221,
+    "artifact_id": 10557550335,
+    "artifact_sha256": "9c6612b94e615504f7b52114540f61b151702a60c837155fdb0488fb9607b6ae",
+    "path_in_artifact": "kaggle-read/submission-status.json",
+    "execution_commit": "450ee8e69fa699c11f5eadd361963d880eb8223a"
+  },
+  "new_submissions_during_this_continuation": 0,
+  "official_limits_at_check": {"numToday": 1, "numTotal": 6, "numAllowedNow": 4},
+  "attempts_last_24h": 1,
+  "internal_rolling_24h_cap": 2,
+  "pending_or_ambiguous_submissions": [],
+  "note": "The earlier 15:58 UTC observation was pending. This later read confirms a numeric score and empty error; no second request was submitted."
+}
