@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r08b-status-20260918-1600-01",
+  "id": "casmi-formula-diagnostic-20260918-01",
   "task": "script",
-  "script": "tasks/casmi_r08b_submission.py",
-  "arguments": ["--stage", "status"],
+  "script": "tasks/casmi_formula_research.py",
+  "arguments": [],
   "requireCuda": false
 }
