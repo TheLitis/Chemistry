@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-condition-encoder-weights-check-20260919-01",
+  "id": "casmi-condition-encoder-isolated-20260919-01",
   "task": "script",
-  "script": "tasks/casmi_conditioned_encoder_check.py",
+  "script": "tasks/casmi_conditioned_runner.py",
   "arguments": [],
   "requireCuda": false
 }
