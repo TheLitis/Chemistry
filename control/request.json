@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-dreams-public-torchscript-smoke-20260919-01",
+  "id": "casmi-public-baseline-corpus-audit-20260919-01",
   "task": "script",
-  "script": "tasks/casmi_dreams_bootstrap.py",
+  "script": "tasks/casmi_bottleneck_audit.py",
   "arguments": [],
   "requireCuda": false
 }
