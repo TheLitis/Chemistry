@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-baseline328-inputs-20260919-02",
+  "id": "casmi-condition-encoder-weights-check-20260919-01",
   "task": "script",
-  "script": "tasks/casmi_baseline328_inputs.py",
+  "script": "tasks/casmi_conditioned_encoder_check.py",
   "arguments": [],
   "requireCuda": false
 }
