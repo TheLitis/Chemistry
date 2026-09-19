@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-r10-connected-confirm-v2-20260918-01",
+  "id": "casmi-fundamental-foundation-probe-20260919-01",
   "task": "script",
-  "script": "tasks/casmi_connected_confirmation.py",
+  "script": "tasks/casmi_foundation_probe.py",
   "arguments": [],
   "requireCuda": false
 }
