@@ -73,6 +73,14 @@ def load(name,path):
     spec=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
 
 
+def parse_public_result(text):
+    lines=[s for s in text.splitlines() if s.strip()]
+    if not lines:raise ValueError('Empty public API response')
+    value=json.loads(lines[-1])
+    if not isinstance(value,dict):raise ValueError('Expected final JSON object')
+    return value
+
+
 def main():
     state=Path(os.environ['CHEMISTRY_STATE_ROOT']);py=state/'envs/casmi26/python.exe'
     if Path(sys.executable).resolve()!=py.resolve():
@@ -127,7 +135,10 @@ print(json.dumps(out,default=serial))
             encoding='utf-8',errors='replace',timeout=180)
         current[name]={'exit_code':r.returncode}
         if r.returncode==0:
-            current[name]['data']=json.loads(r.stdout)
+            try:current[name]['data']=parse_public_result(r.stdout)
+            except ValueError:
+                current[name]['error']='No final JSON object; read failure does not authorize any write'
+                current[name]['stdout_excerpt']=prep.redact(r.stdout,env)[:4000]
         else:current[name]['error']=prep.redact(r.stderr,env)[:1000]
     (out/'kaggle-current.json').write_text(json.dumps(current,indent=2,default=str)+'\n',encoding='utf-8')
     report['current_kaggle_read_completed']=True

@@ -48,3 +48,10 @@ def test_checkpoint_size_unknown_or_duplicate_denied():
     with pytest.raises(ValueError):mod().ssl_entry(x)
     x=metadata();x['files']*=2
     with pytest.raises(ValueError):mod().ssl_entry(x)
+
+
+def test_api_stdout_tolerates_cli_banner_but_requires_final_json_object():
+    m=mod()
+    assert m.parse_public_result('Using configured account\n{"files": []}\n')=={'files':[]}
+    with pytest.raises(ValueError):m.parse_public_result('not JSON\n')
+    with pytest.raises(ValueError):m.parse_public_result('{"x":1}\ntruncated response')

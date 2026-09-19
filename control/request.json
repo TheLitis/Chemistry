@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "id": "casmi-fundamental-foundation-probe-20260919-01",
+  "id": "casmi-fundamental-foundation-probe-20260919-02",
   "task": "script",
   "script": "tasks/casmi_foundation_probe.py",
   "arguments": [],
