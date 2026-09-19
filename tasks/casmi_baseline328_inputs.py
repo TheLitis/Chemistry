@@ -41,7 +41,11 @@ def main():
         if not p.exists():
             cmd=[str(py),'-c','from kaggle.cli import main;main()','datasets','download','-d',ref,'-f',name,'-p',str(folder),'-q']
             r=subprocess.run(cmd,env=env,stdin=subprocess.DEVNULL,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=240)
-            if r.returncode:raise RuntimeError('Public array download failed: '+ref+'/'+name)
+            if r.returncode:
+                if expected is None:
+                    report['assets'][ref+'/'+name]={'status':'optional_metadata_unavailable','exit_code':r.returncode,'coordinate_identity_verified':False}
+                    continue
+                raise RuntimeError('Required public array download failed: '+ref+'/'+name)
             if not p.exists() and p.with_suffix(p.suffix+'.zip').is_file():
                 with zipfile.ZipFile(p.with_suffix(p.suffix+'.zip')) as z:
                     matches=[i for i in z.infolist() if i.filename==name and 0<i.file_size<=limit]
