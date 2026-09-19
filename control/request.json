@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-public-baseline-corpus-audit-20260919-01",
+  "id": "casmi-public-repro-inspect-20260919-01",
   "task": "script",
-  "script": "tasks/casmi_bottleneck_audit.py",
-  "arguments": [],
+  "script": "tasks/casmi_public_repro.py",
+  "arguments": ["--stage", "inspect"],
   "requireCuda": false
 }
