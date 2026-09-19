@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-fundamental-foundation-probe-20260919-02",
+  "id": "casmi-dreams-public-torchscript-smoke-20260919-01",
   "task": "script",
-  "script": "tasks/casmi_foundation_probe.py",
+  "script": "tasks/casmi_dreams_bootstrap.py",
   "arguments": [],
   "requireCuda": false
 }
