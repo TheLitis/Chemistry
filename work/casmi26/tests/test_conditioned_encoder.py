@@ -1,7 +1,7 @@
 import numpy as np
-import pandas as pd
-import torch
 import pytest
+pd=pytest.importorskip('pandas')
+torch=pytest.importorskip('torch')
 from casmi26.conditioned_encoder import model_logits,condition_groups
 
 class Recorder(torch.nn.Module):
