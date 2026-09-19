@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-public-repro-verify-20260919T113929Z",
+  "id": "casmi-public-repro-submit-20260919T114157Z",
   "task": "script",
   "script": "tasks/casmi_public_delivery.py",
-  "arguments": ["--stage", "verify"],
+  "arguments": ["--stage", "submit"],
   "requireCuda": false
 }
