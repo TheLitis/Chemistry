@@ -33,7 +33,7 @@ def test_private_offline_identity_uses_only_frozen_public_sources():
                     'kernel_sources':[],'model_sources':[],'enable_internet':False,'docker_image':'same-image'}
     result=m.kernel_metadata(source)
     assert result['id']==m.KERNEL and result['is_private'] is True and result['enable_internet'] is False
-    assert result['dataset_sources']==source['dataset_sources'] and result['docker_image']=='same-image'
+    assert result['dataset_sources']==list(m.ACTIVE_DATASETS) and result['docker_image']=='same-image'
     assert result['enable_gpu'] is True
     with pytest.raises(ValueError):m.kernel_metadata({**source,'dataset_sources':['unreviewed/private']})
     with pytest.raises(ValueError):m.kernel_metadata({**source,'id':'different/notebook'})
@@ -85,3 +85,40 @@ def test_global_submission_guard_does_not_replace_existing_lock(tmp_path):
     m.create_exclusive_lock(p)
     with pytest.raises(FileExistsError):m.create_exclusive_lock(p)
     assert p.is_file()
+
+
+def test_nested_cli_metadata_and_verbose_ccby_are_supported():
+    m=mod()
+    assert m.permitted_license({'info':{'licenses':[{'name':'CC0-1.0'}]}})=='cc0-1.0'
+    assert m.permitted_license({'info':{'licenses':[{'name':'Attribution 4.0 International (CC BY 4.0)'}]}})=='cc-by-4.0'
+
+
+def test_unused_restricted_bio_and_raw_coconut_are_not_mounted():
+    m=mod();source={'id':m.AUTHOR,'dataset_sources':list(m.DATASETS),'competition_sources':[m.SLUG]}
+    actual=m.kernel_metadata(source)['dataset_sources']
+    assert 'prvsiyan/chebi-lipidmaps-casmi26' not in actual
+    assert 'thedevastator/open-source-natural-product-annotations' not in actual
+    assert 'prvsiyan/casmi26-fp-models-v2' in actual
+    assert 'prvsiyan/casmi26-ranker-features' in actual
+    assert 'prvsiyan/coconut-casmi26-candidates' in actual
+
+
+def test_rdkit_artifact_must_match_official_pypi_bytes_before_execution():
+    m=mod();fn=getattr(m,'rdkit_wheel_contract',None)
+    assert callable(fn),'Publisher-wheel verification missing'
+    payload={'info':{'name':'rdkit','version':'2026.3.3','license':'BSD-3-Clause'},'urls':[
+      {'filename':'rdkit-2026.3.3-cp312-cp312-manylinux_2_28_x86_64.whl','digests':{'sha256':'a'*64},'size':4000}]}
+    contract=fn(payload)
+    assert contract['files'][payload['urls'][0]['filename']]=='a'*64
+    assert contract['license']=='bsd-3-clause'
+    for bad in ({**payload,'info':{**payload['info'],'version':'2025.9.4'}},
+                {**payload,'urls':[]}):
+        with pytest.raises(ValueError):fn(bad)
+
+
+def test_wheel_hash_assertion_precedes_original_scientific_cells():
+    m=mod();b=m.make_notebook(sample_book(),wheels={'files':{'rdkit-x.whl':'a'*64}})
+    prefix=''.join(b['cells'][1]['source'])
+    assert 'file_digest' in prefix and 'PyPI publisher bytes' in prefix
+    compile(prefix,'<preinstall>','exec')
+    assert m.code_digest(sample_book())==m.code_digest({'cells':b['cells'][2:-1]})
