@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-public-repro-submit-20260919T114157Z",
+  "id": "casmi-public-repro-status-20260919T114245Z",
   "task": "script",
   "script": "tasks/casmi_public_delivery.py",
-  "arguments": ["--stage", "submit"],
+  "arguments": ["--stage", "status"],
   "requireCuda": false
 }
