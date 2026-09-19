@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "id": "casmi-public-repro-status-20260919T133637Z",
+  "id": "casmi-baseline328-inputs-20260919-01",
   "task": "script",
-  "script": "tasks/casmi_public_delivery.py",
-  "arguments": ["--stage", "status"],
+  "script": "tasks/casmi_baseline328_inputs.py",
+  "arguments": [],
   "requireCuda": false
 }
