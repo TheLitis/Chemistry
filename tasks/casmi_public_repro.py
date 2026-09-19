@@ -28,6 +28,13 @@ DATASETS=('prvsiyan/casmi26-fp-models-v2','aidensong123/casmi26-offline-rdkit-20
           'prvsiyan/casmi26-ranker-features','prvsiyan/chebi-lipidmaps-casmi26',
           'prvsiyan/coconut-casmi26-candidates','thedevastator/open-source-natural-product-annotations')
 ROOT='public-baseline-v17-repro-20260919'
+# Packaging amendment before first publication: both inputs are unused by the
+# frozen scientific code. Do not attach a restrictive dataset unnecessarily.
+UNUSED_DATASETS={'prvsiyan/chebi-lipidmaps-casmi26',
+                 'thedevastator/open-source-natural-product-annotations'}
+ACTIVE_DATASETS=tuple(x for x in DATASETS if x not in UNUSED_DATASETS)
+RDKIT_DATASET='aidensong123/casmi26-offline-rdkit-2026033'
+
 
 
 def sha256(path):
@@ -52,10 +59,26 @@ def code_digest(book):
 
 
 def permitted_license(meta):
+    meta=meta.get('info',meta)
     values=[str(x.get('name','')).lower() for x in meta.get('licenses',[])]
+    values=[{'attribution 4.0 international (cc by 4.0)':'cc-by-4.0'}.get(v,v) for v in values]
     good={'cc0-1.0','cc-by-4.0','apache-2.0','mit'}
     if len(values)!=1 or values[0] not in good:raise ValueError('Dataset license requires separate review: '+repr(values))
     return values[0]
+
+
+def rdkit_wheel_contract(meta):
+    info=meta.get('info',{})
+    if info.get('name','').lower()!='rdkit' or info.get('version')!='2026.3.3':
+        raise ValueError('Wrong official PyPI package')
+    licence=(info.get('license_expression') or info.get('license') or '').strip().lower()
+    if licence not in ('bsd-3-clause','bsd 3-clause','bsd-3-clause license','bsd 3-clause license'):
+        raise ValueError('Official wheel licensing requires review: '+licence)
+    files={r['filename']:r.get('digests',{}).get('sha256') for r in meta.get('urls',[])
+           if r.get('filename','').startswith('rdkit-2026.3.3-') and r['filename'].endswith('.whl')}
+    if not files or any(not isinstance(h,str) or not re.fullmatch('[0-9a-f]{64}',h) for h in files.values()):
+        raise ValueError('Missing publisher wheel checksums')
+    return {'publisher':'https://pypi.org/pypi/rdkit/2026.3.3/json','license':'bsd-3-clause','files':files}
 
 
 def kernel_metadata(source):
@@ -66,7 +89,7 @@ def kernel_metadata(source):
     return {'id':KERNEL,'title':'CASMI26 Public V17 Reproduction - haideptry credit',
             'code_file':'baseline.ipynb','language':'python','kernel_type':'notebook',
             'is_private':True,'enable_gpu':True,'enable_tpu':False,'enable_internet':False,
-            'dataset_sources':list(DATASETS),'competition_sources':[SLUG],'kernel_sources':[],
+            'dataset_sources':list(ACTIVE_DATASETS),'competition_sources':[SLUG],'kernel_sources':[],
             'model_sources':[],'docker_image':source.get('docker_image'),'machine_shape':source.get('machine_shape')}
 
 
@@ -82,7 +105,7 @@ def validate_rows(expected_ids,rows):
     return {'rows':len(rows),'guesses':total,'duplicate_guess_rows':duplicate}
 
 
-def make_notebook(original):
+def make_notebook(original, *, wheels=None):
     book=copy.deepcopy(original)
     for c in book['cells']:
         if c['cell_type']=='code':c['outputs']=[];c['execution_count']=None
@@ -91,8 +114,19 @@ def make_notebook(original):
         'Original: haideptry, Enveda CASMI 2026 - Fast Spectral Cosine Baseline. Apache-2.0.\n',
         'https://www.kaggle.com/code/haideptry/enveda-casmi-2026-fast-spectral-cosine-baseline\n',
         'Original code cells are unchanged. This private copy only adds identity/output auditing. '
-        'Published V17 score is the author\'s, not a score established for this copy.\n']}
+        'Published V17 score is the author\'s, not a score established for this copy.\n',
+        'Unused ChEBI/LIPID MAPS and raw COCONUT inputs are detached; scientific code is unchanged. '
+        'COCONUT candidate data: prvsiyan, CC BY 4.0. RDKit wheel bytes must match official PyPI BSD-3-Clause artifacts before installation.\n']}
     prefix={'cell_type':'code','metadata':{},'source':['import time as _repro_time\n_REPRO_START = _repro_time.monotonic()\n'], 'outputs':[],'execution_count':None}
+    if wheels is not None:
+        if not wheels.get('files'):raise ValueError('Publisher wheel identity missing')
+        prefix['source'] += ('import glob as _wg,hashlib as _wh,pathlib as _wp\n'
+            +'_WHEEL_HASHES = '+repr(wheels['files'])+'\n'
+            +'_found = _wg.glob("/kaggle/input/**/rdkit-*.whl", recursive=True)\n'
+            +'assert _found, "Official offline RDKit wheel missing"\n'
+            +'for _wheel in _found:\n'
+            +'    with open(_wheel, "rb") as _wf: _ws = _wh.file_digest(_wf, "sha256").hexdigest()\n'
+            +'    assert _WHEEL_HASHES.get(_wp.Path(_wheel).name)==_ws, "Wheel differs from PyPI publisher bytes"\n').splitlines(True)
     footer=inspect.getsource(validate_rows)+'''
 import json as _json, hashlib as _hashlib, csv as _csv
 from pathlib import Path as _Path
@@ -180,21 +214,40 @@ def main():
             path=source/'enveda-casmi-2026-fast-spectral-cosine-baseline.ipynb';verify_file(path,SOURCE_HASH)
             book=read(path);meta=kernel_metadata(read(source/'kernel-metadata.json'))
             folder=root/'notebook';folder.mkdir(exist_ok=True)
-            if not journal.get('publish_attempted'):
-                dump(folder/'baseline.ipynb',make_notebook(book));dump(folder/'kernel-metadata.json',meta)
+            if journal.get('publish_attempted'):raise ValueError('Published inspection cannot be changed')
+            # PyPI data is a plain JSON document. No package/code is installed on PC.
+            import urllib.request
+            tls=load('repro_tls',repo/'tasks/public_tls.py')
+            with urllib.request.urlopen('https://pypi.org/pypi/rdkit/2026.3.3/json',
+                                        context=tls.verified_context(),timeout=60) as stream:
+                raw=stream.read(2*1024**2+1)
+            if len(raw)>2*1024**2:raise ValueError('Unexpected publisher response size')
+            publisher=json.loads(raw);wheel_contract=rdkit_wheel_contract(publisher)
+            dump(root/'rdkit-publisher.json',publisher);dump(out/'rdkit-wheel-contract.json',wheel_contract)
+            dump(folder/'baseline.ipynb',make_notebook(book,wheels=wheel_contract));dump(folder/'kernel-metadata.json',meta)
             licenses={};metadata_status={}
-            for ref in DATASETS:
+            for ref in ACTIVE_DATASETS:
                 d=root/'dataset-metadata'/ref.replace('/','--');d.mkdir(parents=True,exist_ok=True)
                 rc,_=cli('metadata-'+ref.replace('/','--'),['datasets','metadata',ref,'-p',str(d)])
                 entries=list(d.glob('*.json'));metadata_status[ref]={'exit_code':rc}
                 if rc or not entries:continue
-                value=read(entries[0]);target=out/'dataset-metadata'/ref.replace('/','--');target.mkdir(parents=True,exist_ok=True)
+                value=read(entries[0]);info=value.get('info',value)
+                if info.get('ownerUser','')+'/'+info.get('datasetSlug','')!=ref:raise ValueError('Dataset identity differs')
+                target=out/'dataset-metadata'/ref.replace('/','--');target.mkdir(parents=True,exist_ok=True)
                 shutil.copy2(entries[0],target/entries[0].name)
-                try:licenses[ref]=permitted_license(value)
-                except ValueError as exc:metadata_status[ref]['review_required']=str(exc)
+                if ref==RDKIT_DATASET:
+                    # Dataset's generic 'other' is not a license grant. Permit
+                    # only publisher-identical wheel bytes, checked BEFORE pip.
+                    licenses[ref]='official_pypi_bsd3_bytes_only'
+                    metadata_status[ref]['wheel_checks_before_execution']=True
+                else:
+                    try:licenses[ref]=permitted_license(value)
+                    except ValueError as exc:metadata_status[ref]['review_required']=str(exc)
             journal.update(source_sha256=SOURCE_HASH,code_sha256=code_digest(book),notebook_sha256=sha256(folder/'baseline.ipynb'),
                            metadata_sha256=sha256(folder/'kernel-metadata.json'),licenses=licenses,
-                           inspected=len(licenses)==len(DATASETS))
+                           inspected=len(licenses)==len(ACTIVE_DATASETS),
+                           detached_unused_datasets=sorted(UNUSED_DATASETS),
+                           wheel_contract_sha256=sha256(out/'rdkit-wheel-contract.json'))
             save();report.update(status='ready_for_private_preview' if journal['inspected'] else 'dataset_metadata_review_required',metadata=metadata_status)
             shutil.copy2(folder/'baseline.ipynb',out/'baseline.ipynb');shutil.copy2(folder/'kernel-metadata.json',out/'kernel-metadata.json')
         elif args.stage=='publish':
