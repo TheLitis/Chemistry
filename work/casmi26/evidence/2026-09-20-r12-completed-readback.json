@@ -1,0 +1,65 @@
+{
+  "status": "existing_completed_R12_collected_and_independently_verified",
+  "kernel": "thelindortis/casmi26-r12-ion-view-diagnostic",
+  "kernel_id": 134996377,
+  "current_version_number_from_api": 1,
+  "all_code_sha256": "7ce9605afe0b7e5f75f035604640a593f6c1acf5425db947a52c5cee7c8c07e6",
+  "completed_notebook_was_retrieved_not_reexecuted": true,
+  "collection_run_id": 35499761103,
+  "collection_artifact_id": 10601900956,
+  "collection_artifact_sha256": "e1ad28e532263a6553e7d3386279eb78bbf3abcd7f46589931b099420cec6e58",
+  "checked_utc": "2026-09-20T08:31:20.824288+00:00",
+  "notebook_seconds": 3610.399234681,
+  "molecules": 400,
+  "spectra": 1213,
+  "mixed_polarity_groups": 97,
+  "mixed_adduct_groups": 108,
+  "frozen_matches_scored_control_byte_for_byte": true,
+  "variants": {
+    "frozen": {"changed_top1": 0, "changed_rows": 0, "changed_candidate_sets": 0, "sha256": "2badfe4735facab3d2da4387a4ce96b0032446be4cd1514854adb84fef7be6b9"},
+    "aligned_rows": {"changed_top1": 0, "changed_rows": 0, "changed_candidate_sets": 0, "sha256": "2badfe4735facab3d2da4387a4ce96b0032446be4cd1514854adb84fef7be6b9"},
+    "single_only": {"changed_top1": 0, "changed_rows": 391, "changed_candidate_sets": 339, "sha256": "dcebe5e219a1d740e959710eb7aea41a385dc172954a02994a74861ae7be45ef"},
+    "ion_views": {"changed_top1": 0, "changed_rows": 126, "changed_candidate_sets": 110, "sha256": "fc24a8c9214754c214b3c58da1faa66cd032248140c8b849b646022c5483a676"}
+  },
+  "independent_check": {
+    "csv_files": 4,
+    "per_variant_per_molecule_flags": 2400,
+    "imports_production_ranker": false,
+    "all_checks_passed": true,
+    "labels_read": false,
+    "duplicate_padding_rows_in_each_variant": 42,
+    "chemical_structures_validated_on_ChemistryPC": true
+  },
+  "prior_real_weight_engineering_run": {
+    "run_id": 35452377355,
+    "artifact_id": 10587406693,
+    "retrieved_not_rerun": true,
+    "groups": 32,
+    "spectra": 176,
+    "original_reverse_row_order_changed_groups": 26,
+    "conditioned_adapter_reverse_row_order_changed_groups": 0,
+    "scope": "Existing conditioned_encoder adapter; not identical to every R12 variant and not a chemistry accuracy test."
+  },
+  "current_account_read": {
+    "run_id": 35500277686,
+    "artifact_id": 10602630076,
+    "checked_utc": "2026-09-20T08:42:19.970968+00:00",
+    "best_confirmed_submission_ref": 56357707,
+    "best_confirmed_public_score": 0.328,
+    "error_description": "",
+    "submission_count": 7,
+    "r12_submission_present": false
+  },
+  "new_training": false,
+  "new_kaggle_notebook_versions_this_continuation": 0,
+  "new_contest_submissions_this_continuation": 0,
+  "accuracy_established": false,
+  "incumbent_changed": false,
+  "limitations": [
+    "Prediction disagreements on the visible example test are not accuracy measurements.",
+    "Equal first guesses do not prove equal hidden-test MRR.",
+    "Condition-aware merging can differ from the merged model's training distribution.",
+    "Public model pretraining overlap has not been independently reconstructed.",
+    "The author duplicate-padding convention is retained; 25 distinct structures per row are not claimed."
+  ]
+}
