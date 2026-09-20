@@ -58,6 +58,23 @@ for name in ['kernels_status','kernels_pull','competition_submit','competition_s
   result[name]={'signature':str(inspect.signature(method)),'source':source[:40000]}
 try:result['current_worker_status']=plain(api.kernels_status('thelindortis/casmi26-r12-ion-view-diagnostic'))
 except Exception as exc:result['status_read_error']=type(exc).__name__
+from kaggle.api.kaggle_api_extended import ApiGetKernelRequest
+import hashlib
+with api.build_kaggle_client() as client:
+ for suffix in ['', '/1']:
+  req=ApiGetKernelRequest();req.user_name='thelindortis';req.kernel_slug='casmi26-r12-ion-view-diagnostic'+suffix
+  try:
+   response=client.kernels.kernels_api_client.get_kernel(req)
+   data=plain(response)
+   if not isinstance(data,dict):raise ValueError('Unknown response schema')
+   blob=data.get('blob',{})
+   source=blob.pop('source',None)
+   if source is None:source=response.blob.source
+   notebook=json.loads(source)
+   cells=[''.join(c['source']) for c in notebook['cells'] if c['cell_type']=='code']
+   data['all_code_sha256']=hashlib.sha256(json.dumps(cells,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()
+   result['kernel_latest' if not suffix else 'kernel_version_1']=data
+  except Exception as exc:result['kernel_read_error'+suffix.replace('/','_')]=type(exc).__name__+': '+str(exc)[:200]
 print(json.dumps(result))
 '''
     report = {'new_submissions': 0, 'new_notebook_versions': 0,
